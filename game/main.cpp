@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Load OpenGL extensions with GLAD
-    if (!Render::init((GLADloadproc)SDL_GL_GetProcAddress, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT)) {
+    if (!render_init((GLADloadproc)SDL_GL_GetProcAddress, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT)) {
         log_error("Failed to initialize render");
         return EXIT_FAILURE;
     }

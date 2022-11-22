@@ -1,9 +1,6 @@
-#ifndef _LOG_H_
-#define _LOG_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#pragma once
+#include"types.h"
+C_HEADER_START
 
 enum {
     LOG_INFO = 0,
@@ -26,8 +23,4 @@ bool log_init();
 #define log_error(...) \
     log_level(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif // _LOG_H_
+C_HEADER_END

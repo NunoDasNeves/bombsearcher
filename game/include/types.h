@@ -1,9 +1,19 @@
-#ifndef _TYPES_H_
-#define _TYPES_H_
+#pragma once
+
+#ifdef __cplusplus
+#define C_HEADER_START extern "C" {
+#define C_HEADER_END }
+#else
+#define C_HEADER_START
+#define C_HEADER_END
+#endif
+
+C_HEADER_START
 
 #include<assert.h>
 #include<stdint.h>
 #include<limits.h>
+#include<stdbool.h>
 
 static_assert(CHAR_BIT == 8, "Char must be 8 bits");
 
@@ -20,4 +30,4 @@ typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
 
-#endif // _TYPES_H_
+C_HEADER_END

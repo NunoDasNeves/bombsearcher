@@ -1,19 +1,17 @@
+#include<stdlib.h>
+
 #include<SDL.h>
-
 #include"glad/glad.h"
-
 #include"imgui.h"
 #include"imgui_impl_sdl.h"
 #include"imgui_impl_opengl3.h"
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-#include<stdlib.h>
 
 #include "types.h"
 #include "platform.h"
 #include "log.h"
+#include "render.h"
 
 bool keep_running = true;
 
@@ -114,7 +112,7 @@ int main(int argc, char **argv)
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO) < 0)
     {
-        log_error("SDL couldn't be initialized - SDL_Error: %s\n", SDL_GetError());
+        log_error("SDL couldn't be initialized - SDL_Error: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
 
@@ -125,7 +123,7 @@ int main(int argc, char **argv)
         SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL);
     
     if(window == NULL) {
-        log_error("Window could not be created - SDL_Error: %s\n", SDL_GetError());
+        log_error("Window could not be created - SDL_Error: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
 
@@ -135,14 +133,14 @@ int main(int argc, char **argv)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     gl_context = SDL_GL_CreateContext(window);
     if(gl_context == NULL) {
-        log_error("OpenGL context could not be created - SDL_Error: %s\n", SDL_GetError());
+        log_error("OpenGL context could not be created - SDL_Error: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
 
     // Use Vsync
     if(SDL_GL_SetSwapInterval(1) < 0)
     {
-        log_error("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
+        log_error("Warning: Unable to set VSync! SDL Error: %s", SDL_GetError());
     }
 
     // Init IMGUI
@@ -156,9 +154,8 @@ int main(int argc, char **argv)
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Load OpenGL extensions with GLAD
-    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
-    {
-        log_error("Failed to initialize GLAD");
+    if (!Render::init((GLADloadproc)SDL_GL_GetProcAddress, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT)) {
+        log_error("Failed to initialize render");
         return EXIT_FAILURE;
     }
 
@@ -173,6 +170,8 @@ int main(int argc, char **argv)
                 log_debug("Couldn't open joystick 0");
             }
         }
+    } else {
+        log_info("No joysticks found");
     }
 
     SDL_SetRelativeMouseMode(SDL_TRUE);

@@ -15,6 +15,13 @@ C_HEADER_START
 #include<limits.h>
 #include<stdbool.h>
 
+#ifdef DEBUG
+#define ASSERT(_EXP) assert(_EXP)
+#else
+#define ASSERT(_EXP) (_EXP)
+#endif
+
+/* lel */
 static_assert(CHAR_BIT == 8, "Char must be 8 bits");
 
 #define BITS_PER_BYTE 8

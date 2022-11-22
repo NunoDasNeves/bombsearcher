@@ -1,26 +1,28 @@
-#include<stdlib.h>
-
 #include<SDL.h>
 #include"glad/glad.h"
 #include"imgui.h"
 #include"imgui_impl_sdl.h"
 #include"imgui_impl_opengl3.h"
+
+#include"types.h"
+#include"platform.h"
+#include"log.h"
+#include"render.h"
+#include"game.h"
+
+/* TODO alloc
+#define STBI_MALLOC
+#define STBI_REALLOC
+#define STBI_FREE
+*/
+#define STBI_ASSERT(X) ASSERT(X)
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-#include "types.h"
-#include "platform.h"
-#include "log.h"
-#include "render.h"
 
 bool keep_running = true;
 
 const int GAME_WINDOW_WIDTH = 960;
 const int GAME_WINDOW_HEIGHT = 680;
-
-void game_update_and_render()
-{
-}
 
 static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
 {
@@ -174,6 +176,11 @@ int main(int argc, char **argv)
         log_info("No joysticks found");
     }
 
+    if (!game_init()) {
+        log_error("Failed to initialize game");
+        return EXIT_FAILURE;
+    }
+
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     SDL_Event e;
@@ -192,7 +199,9 @@ int main(int argc, char **argv)
         }
         poll_mouse(imgui_io);
 
-        game_update_and_render();
+        if (!game_update_and_render()) {
+            keep_running = false;
+        }
 
         ImGui::Render();
         glViewport(0, 0, (int)imgui_io.DisplaySize.x, (int)imgui_io.DisplaySize.y);

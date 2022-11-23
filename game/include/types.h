@@ -1,4 +1,8 @@
 #pragma once
+#include<assert.h>
+#include<stdint.h>
+#include<limits.h>
+#include<stdbool.h>
 
 #ifdef __cplusplus
 #define C_HEADER_START extern "C" {
@@ -10,16 +14,17 @@
 
 C_HEADER_START
 
-#include<assert.h>
-#include<stdint.h>
-#include<limits.h>
-#include<stdbool.h>
-
 #ifdef DEBUG
 #define ASSERT(_EXP) assert(_EXP)
 #else
 #define ASSERT(_EXP) (_EXP)
 #endif
+
+#define KiB(x) (1024 * (x))
+#define MiB(x) (1024 * KiB(x))
+#define GiB(x) (1024 * MiB(x))
+
+#define ALIGN_UP(x, align) ((((unsigned long long)(x)) + (align) - 1) / (align))
 
 /* lel */
 static_assert(CHAR_BIT == 8, "Char must be 8 bits");

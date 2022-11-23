@@ -91,7 +91,7 @@ static void _log_print(const char *fmt, va_list args)
 
 bool log_init()
 {
-    log_buf = platform_alloc_pages(1);
+    log_buf = platform_alloc_page_aligned(PAGE_SIZE);
     if (!log_buf)
         return false;
     log_info("Log init success");

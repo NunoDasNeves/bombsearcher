@@ -47,19 +47,24 @@ C_HEADER_START
  */
 
 enum {
-    MEM_INIT = 0,   /* never freed */
-    MEM_SCRATCH,    /* short term; scoped; nested; can only free the whole scope */
-    MEM_LONGTERM   /* long term; freeable */
+    MEM_CTX_NOFREE   = 0, /* never freed */
+    MEM_CTX_SCRATCH  = 1, /* short term; scoped; nested; can only free the whole scope */
+    MEM_CTX_LONGTERM = 2, /* long term; freeable */
+    MEM_CTX_OTHER    = 3  /* not managed by mem module */
 };
 
 /* sets context, returns the previous context (so you can restore it later if you want) */
 unsigned mem_set_context(unsigned type); // MEM_* enum
-unsigned mem_current_context();
+unsigned mem_get_current_context();
 unsigned mem_get_context(void * ptr);
 
-/* For creating pools for longterm allocations. Doubling from min to max, inclusive */
-#define MEM_LONGTERM_BUCKET_MIN 8
-#define MEM_LONGTERM_BUCKET_MAX GiB(1)
+/*
+ * For creating pools for longterm allocations
+ */
+#define MEM_LONGTERM_BUCKET_MIN_POW 3
+#define MEM_LONGTERM_BUCKET_MAX_POW 30
+#define MEM_LONGTERM_BUCKET_MIN (1 << (MEM_LONGTERM_BUCKET_MIN_POW))
+#define MEM_LONGTERM_BUCKET_MAX (1 << (MEM_LONGTERM_BUCKET_MAX_POW))
 
 #define MEM_SCRATCH_BUFFERS 4
 /*
@@ -67,36 +72,37 @@ unsigned mem_get_context(void * ptr);
  * less than MEM_SCRATCH_BUFFERS
  * return the new scope
  */
-unsigned mem_scratch_begin();
+unsigned mem_scratch_scope_begin();
 /*
  * Decrement the scratch scope by 1, freeing the current scratch buffer if the previous
  * scope was less than MEM_SCRATCH_SCOPES
  * return the new scope
  */
-unsigned mem_scratch_end();
+unsigned mem_scratch_scope_end();
+unsigned mem_get_scratch_scope();
 
 /*
  * context-dependent allocation - can be used in place of malloc/free
  * These will use init, scratch (in the current scratch scope) or longterm depending on context
  */
 void *mem_alloc(u64 size);
-void mem_free(); // does nothing in scratch context
+//void *mem_realloc(void *ptr, u64 newsize);
+void *mem_realloc_sized(void *ptr, u64 oldsize, u64 newsize);
+void mem_free(void *ptr); // does nothing in contexts MEM_SCRATCH, MEM_NOFREE
 
 /*
  * Allocate from the current scratch buffer
  * To free the current scratch buffer, use mem_scratch_end()
  */
 void *mem_alloc_scratch(u64 size);
-/*
- * Allocate from longerm memory
- */
+void *mem_alloc_nofree(u64 size);
 void *mem_alloc_longterm(u64 size);
-void mem_free_longterm();
+void mem_free_longterm(void *ptr);
 
 /*
  * Allocate virtual addresses for mem_budget*(1 + MEM_LONGTERM_BUCKETS + MEM_SCRATCH_BUFFERS) and set up buffers
  * mem_budget should be a multiple of MEM_LONGTERM_BUCKETS_MAX
- * Context is set to MEM_INIT, scratch scope is 0
+ * Context is set to MEM_NOFREE, scratch scope is 0
  */
 bool mem_init(u64 mem_budget);
 

@@ -13,7 +13,7 @@ struct BumpAllocator {
     u64 size;
 };
 
-static bool init_bump_allocator(struct BumpAllocator *allocator, void *mem, u64 size)
+static bool bump_init_allocator(struct BumpAllocator *allocator, void *mem, u64 size)
 {
     ASSERT(allocator);
     ASSERT(mem);
@@ -62,7 +62,7 @@ struct PoolAllocator {
     u64 block_size;
 };
 
-static bool init_pool_allocator(struct PoolAllocator *allocator, void *mem, u64 size, u64 block_size)
+static bool pool_init_allocator(struct PoolAllocator *allocator, void *mem, u64 size, u64 block_size)
 {
     ASSERT(allocator);
     ASSERT(mem);

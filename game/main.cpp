@@ -11,11 +11,9 @@
 #include"render.h"
 #include"game.h"
 
-/* TODO alloc
-#define STBI_MALLOC
-#define STBI_REALLOC
-#define STBI_FREE
-*/
+#define STBI_MALLOC(sz) mem_alloc(sz)
+#define STBI_REALLOC_SIZED(p,oldsz,newsz) mem_realloc_sized(p,oldsz,newsz)
+#define STBI_FREE(p) mem_free(p)
 #define STBI_ASSERT(X) ASSERT(X)
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -111,19 +109,16 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (!log_init())
-    {
+    if (!log_init()) {
         return EXIT_FAILURE;
     }
 
-    if (!mem_init(GiB(1)))
-    {
+    if (!mem_init(GiB(1))) {
         log_error("Failed to initialize memory subsystem");
         return EXIT_FAILURE;
     }
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO) < 0)
-    {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO) < 0) {
         log_error("SDL couldn't be initialized - SDL_Error: %s", SDL_GetError());
         return EXIT_FAILURE;
     }

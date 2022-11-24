@@ -1,3 +1,4 @@
+#include<stdlib.h>
 #include"glad/glad.h"
 #include"log.h"
 #include"types.h"
@@ -26,7 +27,7 @@ static GLuint create_shader(const char *filename, unsigned type)
     GLint success;
     GLuint id;
     u64 len = 0;
-    char *shader_code;
+    GLchar const*shader_code;
 
     ASSERT(filename);
 

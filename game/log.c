@@ -95,8 +95,8 @@ static size_t format_time_ms(u64 ms, char* buf, size_t size)
 
 static void _log_print(const char *str, size_t len)
 {
-    // TODO print to log file, use platform primitives
-    printf(str);
+    // TODO print to log file
+    platform_console_print(str, len);
 }
 
 /* Don't do anything fancy; print exactly what is asked for */

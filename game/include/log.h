@@ -17,12 +17,12 @@ bool log_init();
 #define log_fmt(level,fmt) #level ":" __FILE__ ":" TO_STRING(__LINE__) " -- " fmt
 
 #define log_debug(fmt, ...) \
-    log_timestamp(log_fmt(DEBUG, fmt), __VA_ARGS__)
+    log_timestamp(log_fmt(DEBUG, fmt), ##__VA_ARGS__)
 #define log_info(fmt, ...) \
-    log_timestamp(log_fmt(INFO, fmt), __VA_ARGS__)
+    log_timestamp(log_fmt(INFO, fmt), ##__VA_ARGS__)
 #define log_warn(fmt, ...) \
-    log_timestamp(log_fmt(WARN, fmt), __VA_ARGS__)
+    log_timestamp(log_fmt(WARN, fmt), ##__VA_ARGS__)
 #define log_error(fmt, ...) \
-    log_timestamp(log_fmt(ERROR, fmt), __VA_ARGS__)
+    log_timestamp(log_fmt(ERROR, fmt), ##__VA_ARGS__)
 
 C_END

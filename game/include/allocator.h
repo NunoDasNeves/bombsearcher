@@ -53,6 +53,7 @@ static void bump_reset(struct BumpAllocator *allocator)
 static bool bump_allocator_test()
 {
     // TODO
+    return true;
 }
 
 struct PoolAllocator {
@@ -131,6 +132,7 @@ static void pool_free(struct PoolAllocator *allocator, void *ptr)
 static bool pool_allocator_test()
 {
     // TODO
+    return true;
 }
 
 C_END

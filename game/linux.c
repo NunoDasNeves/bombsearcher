@@ -1,5 +1,5 @@
-#include<windows.h>
-#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
 #include"types.h"
 #include"platform.h"
 #include"log.h"
@@ -8,23 +8,25 @@ C_BEGIN
 
 void platform_console_print(const char *ptr, size_t len)
 {
-    // TODO
-    printf(ptr);
+    write(1, ptr, len);
 }
 
+/* TODO maybe use memmap and madvise*/
 void *platform_alloc_page_aligned(size_t size)
 {
-    return VirtualAlloc(NULL, ALIGN_UP(size, PAGE_SIZE), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    return valloc(size);
 }
 
 bool platform_free_page_aligned(void *ptr)
 {
     ASSERT((void *)ALIGN_UP(ptr, PAGE_SIZE) == ptr);
-    return VirtualFree(ptr, 0, MEM_RELEASE);
+    free(ptr);
+    return true;
 }
 
 bool platform_init()
 {
+    ASSERT(sysconf(_SC_PAGE_SIZE) == PAGE_SIZE);
     return true;
 }
 

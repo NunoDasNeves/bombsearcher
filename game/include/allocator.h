@@ -57,39 +57,39 @@ static bool bump_allocator_test()
 }
 
 struct PoolAllocator {
-    void *base; // base should be aligned to block_size
+    void *base; // base should be aligned to obj_size
     void *next_free;
     u64 size;
-    u64 block_size;
+    u64 obj_size;
 };
 
-static bool pool_init_allocator(struct PoolAllocator *allocator, void *mem, u64 size, u64 block_size)
+static bool pool_init_allocator(struct PoolAllocator *allocator, void *mem, u64 size, u64 obj_size)
 {
     ASSERT(allocator);
     ASSERT(mem);
 
     // TODO better checks, maybe
-    if (block_size < sizeof(void*)) {
+    if (obj_size < sizeof(void*)) {
         return false;
     }
-    if ((size % block_size) != 0) {
+    if ((size % obj_size) != 0) {
         return false;
     }
-    if (((u64)mem % block_size) != 0) {
+    if (((u64)mem % obj_size) != 0) {
         return false;
     }
 
     allocator->base = mem;
     allocator->next_free = mem;
     allocator->size = size;
-    allocator->block_size = block_size;
+    allocator->obj_size = obj_size;
 
     /* point each node in the free list to the next block */
     char *curr = (char*)allocator->base;
-    char *last_element = (char*)allocator->base + size - block_size;
-    for(; curr < last_element; curr += block_size) {
+    char *last_element = (char*)allocator->base + size - obj_size;
+    for(; curr < last_element; curr += obj_size) {
         void **free_list_node = (void **)curr;
-        *free_list_node = curr + block_size;
+        *free_list_node = curr + obj_size;
     }
 
     return true;
@@ -99,7 +99,7 @@ static void *pool_alloc(struct PoolAllocator *allocator)
 {
     ASSERT(allocator);
     ASSERT(allocator->base);
-    ASSERT(allocator->block_size >= sizeof(void*));
+    ASSERT(allocator->obj_size >= sizeof(void*));
 
     void *ret = allocator->next_free;
 
@@ -117,7 +117,7 @@ static void pool_free(struct PoolAllocator *allocator, void *ptr)
 {
     ASSERT(allocator);
     ASSERT(allocator->base);
-    ASSERT(allocator->block_size >= sizeof(void*));
+    ASSERT(allocator->obj_size >= sizeof(void*));
 
     if (ptr < allocator->base || (char*)ptr >= (char*)allocator->base + allocator->size) {
         log_warn("Pool tried to free invalid pointer");

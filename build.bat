@@ -2,7 +2,7 @@
 
 set EXE_NAME=Game.exe
 
-set SDL_DIR=C:\SDL2-2.0.10\
+set SDL_DIR=C:\SDL2-2.26.0\
 set IMGUI_DIR=..\imgui
 set STB_DIR=..\stb
 set GLAD_DIR=..\glad
@@ -41,7 +41,7 @@ set COMPILER_FLAGS=%COMMON_COMPILER_FLAGS% %PLATFORM_COMPILER_FLAGS%
 :: /LIBPATH:        sdl library path, libraries to include, and additional arguments (enable console subsystem for debugging)
 :: /INCREMENTAL:NO  perform a full link
 :: /DEBUG           enable debugging
-set PLATFORM_LINKER_FLAGS=/LIBPATH:%SDL_DIR%\lib\x64 SDL2.lib SDL2main.lib
+set PLATFORM_LINKER_FLAGS=/LIBPATH:%SDL_DIR%\lib\x64 SDL2.lib SDL2main.lib shell32.lib
 set COMMON_LINKER_FLAGS=/OUT:%EXE_NAME% /INCREMENTAL:NO /SUBSYSTEM:CONSOLE
 set LINKER_FLAGS=%COMMON_LINKER_FLAGS% %PLATFORM_LINKER_FLAGS% /DEBUG:FULL
 

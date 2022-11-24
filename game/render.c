@@ -23,7 +23,7 @@ static GLuint create_shader(const char *filename, unsigned type)
 {
     GLint success;
     GLuint id;
-    u64 len;
+    u64 len = 0;
     char *shader_code;
 
     ASSERT(filename);
@@ -31,7 +31,7 @@ static GLuint create_shader(const char *filename, unsigned type)
     log_debug("Loading shader \"%s\"", filename);
 
     // read in shader source
-    shader_code = file_read_to_string(filename, &len);
+    shader_code = file_read(filename, &len, true);
     if (!shader_code) {
         log_error("Failed to load shader source");
         return 0;

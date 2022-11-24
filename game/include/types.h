@@ -3,6 +3,8 @@
 #include<stdint.h>
 #include<limits.h>
 #include<stdbool.h>
+#define __STDC_FORMAT_MACROS 1
+#include<inttypes.h>
 
 #ifdef __cplusplus
 #define C_HEADER_START extern "C" {
@@ -19,6 +21,9 @@ C_HEADER_START
 #else
 #define ASSERT(_EXP) (_EXP)
 #endif
+
+#define STRINGIFY(X) #X
+#define TO_STRING(X) STRINGIFY(X)
 
 #define KiB(x) (1024 * (x))
 #define MiB(x) (1024 * KiB(x))

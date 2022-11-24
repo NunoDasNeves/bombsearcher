@@ -1,6 +1,6 @@
 #pragma once
 #include"types.h"
-C_HEADER_START
+C_BEGIN
 
 enum {
     LOG_INFO = 0,
@@ -25,4 +25,4 @@ bool log_init();
 #define log_error(fmt, ...) \
     log_timestamp(log_fmt(ERROR, fmt), __VA_ARGS__)
 
-C_HEADER_END
+C_END

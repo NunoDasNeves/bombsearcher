@@ -4,6 +4,8 @@
 #include"render.h"
 #include"file.h"
 
+C_BEGIN
+
 #define dump_errors() \
 do {                                                                \
     GLenum _err;                                                    \
@@ -121,3 +123,5 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
 
     return true;
 }
+
+C_END

@@ -6,6 +6,8 @@
 #include"platform.h"
 #include"log.h"
 
+C_BEGIN
+
 static void *log_buf;
 #define LOG_BUF_SZ PAGE_SIZE
 
@@ -196,3 +198,5 @@ bool log_init()
 
     return true;
 }
+
+C_END

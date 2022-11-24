@@ -2,7 +2,7 @@
 #include"types.h"
 #include"platform.h"
 
-C_HEADER_START
+C_BEGIN
 
 /*
  * Allocator design
@@ -106,4 +106,4 @@ void mem_free_longterm(void *ptr);
  */
 bool mem_init(u64 mem_budget);
 
-C_HEADER_END
+C_END

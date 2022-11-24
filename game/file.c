@@ -5,6 +5,8 @@
 #include"mem.h"
 #include"file.h"
 
+C_BEGIN
+
 char *file_read(const char *filename, u64 *len, bool to_string)
 {
     ASSERT(filename);
@@ -71,3 +73,5 @@ err_close_file:
     SDL_RWclose(file);
     return NULL;
 }
+
+C_END

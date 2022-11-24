@@ -5,7 +5,7 @@
 #include"types.h"
 #include"log.h"
 
-C_HEADER_START
+C_BEGIN
 
 struct BumpAllocator {
     void *base;
@@ -133,4 +133,4 @@ static bool pool_allocator_test()
     // TODO
 }
 
-C_HEADER_END
+C_END

@@ -1,12 +1,9 @@
 #include<windows.h>
-#include<stdint.h>
-#include<stdbool.h>
+#include"types.h"
 #include"platform.h"
 #include"log.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+C_BEGIN
 
 void *platform_alloc_page_aligned(size_t size)
 {
@@ -24,6 +21,4 @@ bool platform_init()
     return true;
 }
 
-#ifdef __cplusplus
-}
-#endif
+C_END

@@ -4,6 +4,8 @@
 #include"mem.h"
 #include"allocator.h"
 
+C_BEGIN
+
 static u64 allocated; // allocated - freed
 static u64 footprint; // allocated
 
@@ -186,3 +188,5 @@ bool mem_init(u64 mem_budget)
 
     return true;
 }
+
+C_END

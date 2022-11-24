@@ -4,7 +4,7 @@
 #include<assert.h>
 #include"types.h"
 
-C_HEADER_START
+C_BEGIN
 
 #define PAGE_SIZE 0x1000
 
@@ -13,4 +13,4 @@ bool platform_free_page_aligned(void *ptr);
 
 bool platform_init();
 
-C_HEADER_END
+C_END

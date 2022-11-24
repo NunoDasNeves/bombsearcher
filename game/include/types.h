@@ -7,14 +7,14 @@
 #include<inttypes.h>
 
 #ifdef __cplusplus
-#define C_HEADER_START extern "C" {
-#define C_HEADER_END }
+#define C_BEGIN extern "C" {
+#define C_END }
 #else
-#define C_HEADER_START
-#define C_HEADER_END
+#define C_BEGIN
+#define C_END
 #endif
 
-C_HEADER_START
+C_BEGIN
 
 #ifdef DEBUG
 #define ASSERT(_EXP) assert(_EXP)
@@ -47,4 +47,4 @@ typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
 
-C_HEADER_END
+C_END

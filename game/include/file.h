@@ -1,7 +1,7 @@
 #pragma once
 #include"types.h"
 
-C_HEADER_START
+C_BEGIN
 
 /*
  * len should be 0 to read entire file
@@ -10,4 +10,4 @@ C_HEADER_START
  */
 char *file_read(const char *filename, u64 *len, bool to_string);
 
-C_HEADER_END
+C_END

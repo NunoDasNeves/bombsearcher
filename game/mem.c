@@ -1,3 +1,5 @@
+#include<stddef.h>
+#include<stdalign.h>
 #include<string.h>
 #include"types.h"
 #include"platform.h"
@@ -93,6 +95,23 @@ void *mem_alloc(u64 size)
     return NULL;
 }
 
+void *mem_alloc_aligned(u64 align, u64 size)
+{
+    if (align < sizeof(void*) || !IS_POW_2(align)) {
+        return NULL;
+    }
+    // check size is a  multiple of align
+    if (size & (align-1)) {
+        return NULL;
+    }
+    // TODO depend on allocator - mem_alloc does extra work
+    size += align - 1;
+    void *ret = mem_alloc(size);
+    ret = (void *)ALIGN_UP_POW_2(ret, align);
+
+    return ret;
+}
+
 void *mem_realloc_sized(void *ptr, u64 oldsize, u64 newsize)
 {
     if (ptr == NULL) {
@@ -147,7 +166,13 @@ void *mem_alloc_nofree(u64 size)
 {
     ASSERT(nofree.bump.base);
 
+    u64 align = alignof(max_align_t);
+    ASSERT(align >= sizeof(void*));
+    ASSERT((size + align - 1) > size);
+
+    size += align - 1;
     void *ret = bump_alloc(&nofree.bump, size);
+    ret = (void*)ALIGN_UP_POW_2(ret, align);
 
     if (ret != NULL) {
         allocated += size;
@@ -163,6 +188,8 @@ void mem_get_allocated(u64 *ret_allocated, u64 *ret_footprint)
 {
     ASSERT(ret_allocated);
     ASSERT(ret_footprint);
+
+    // TODO contexts
 
     *ret_allocated = allocated;
     *ret_footprint = footprint;

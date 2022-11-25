@@ -85,10 +85,25 @@ unsigned mem_get_scratch_scope();
  * context-dependent allocation - can be used in place of malloc/free
  * These will use init, scratch (in the current scratch scope) or longterm depending on context
  */
+// equivalent of malloc
 void *mem_alloc(u64 size);
+/*
+ * equivalent of aligned_alloc()
+ * alignment must be power of 2
+ * size must be multiple of alignment
+ */
+void *mem_alloc_aligned(u64 alignment, u64 size);
+// equivalent of realloc()
 //void *mem_realloc(void *ptr, u64 newsize);
+// alternative realloc() for stb library
 void *mem_realloc_sized(void *ptr, u64 oldsize, u64 newsize);
-void mem_free(void *ptr); // does nothing in contexts MEM_SCRATCH, MEM_NOFREE
+// equivalent of calloc()
+//void *mem_calloc(u64 nmemb, u64 size);
+/*
+ * equivalent of free()
+ * does nothing in contexts MEM_SCRATCH, MEM_NOFREE
+ */
+void mem_free(void *ptr);
 
 /*
  * Allocate from the current scratch buffer

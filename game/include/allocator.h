@@ -70,14 +70,14 @@ static bool pool_init_allocator(struct PoolAllocator *allocator, void *mem, u64 
 
     // TODO better checks, maybe
     if (obj_size < sizeof(void*)) {
+        log_error("obj_size too small");
         return false;
     }
     if ((size % obj_size) != 0) {
+        log_error("size not multiple of obj_size");
         return false;
     }
-    if (((u64)mem % obj_size) != 0) {
-        return false;
-    }
+    // assume mem is aligned well-enough
 
     allocator->base = mem;
     allocator->next_free = mem;
@@ -128,6 +128,31 @@ static void pool_free(struct PoolAllocator *allocator, void *ptr)
     *free_list_node = allocator->next_free;
     allocator->next_free = ptr;
 }
+
+static bool _pool_try_create(struct PoolAllocator *pool,
+                            size_t num_objs, size_t obj_size,
+                            void *(*alloc_fn)(size_t), char *name)
+{
+    ASSERT(pool);
+    ASSERT(alloc_fn);
+    ASSERT(name);
+
+    size_t mem_size = num_objs*obj_size;
+    void *mem = alloc_fn(obj_size);
+
+    if (mem == NULL) {
+        log_error("Failed to alloc %s", name);
+        return false;
+    }
+    if (!pool_init_allocator(pool, mem, mem_size, obj_size)) {
+        log_error("Failed to init %s", name);
+        return false;
+    }
+    return true;
+}
+
+#define pool_try_create(pool, num_objs, type, alloc_fn) \
+    _pool_try_create(&pool, num_objs, sizeof(type), alloc_fn, #pool)
 
 static bool pool_allocator_test()
 {

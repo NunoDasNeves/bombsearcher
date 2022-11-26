@@ -1,27 +1,53 @@
 #include<stdlib.h>
 #include"glad/glad.h"
-#include"log.h"
 #include"types.h"
+#include"log.h"
 #include"render.h"
 #include"file.h"
+#include"allocator.h"
+#include"mem.h"
 
 C_BEGIN
 
 #define dump_errors() \
-do {                                                                \
-    GLenum _err;                                                    \
-    while ((_err = glGetError()) != GL_NO_ERROR) {                  \
-        log_error("GL error 0x%x", _err, __FUNCTION__, __LINE__);   \
-    }                                                               \
+do {                                                \
+    GLenum __err; \
+    while ((__err = glGetError()) != GL_NO_ERROR) { \
+        log_error("openGL error 0x%x", __err);      \
+    }                                               \
 } while(0)
 
 // buffer for loading errors from opengl
 #define INFO_LOG_SIZE 512
 static char info_log[INFO_LOG_SIZE];
 
-// TODO
-static GLuint screen_vao; // we need to bind some vao to draw the screen triangle...
+#define MAX_TEXTURES 256
+typedef struct _Texture {
+    GLuint id;
+    GLuint fb_id;
+    GLuint rb_id;
+    u32 width;
+    u32 height;
+} Texture;
+struct PoolAllocator texture_pool;
 
+/*
+ * Screen triangle
+ * We render everything to a framebuffer texture, then draw it
+ * to a single triangle that covers the screen.
+ * This will let us do...stuff. Later.
+ */
+static struct {
+    // we need to bind a vao to draw the screen triangle...
+    GLuint vao;
+    GLuint shader;
+    Texture *texture; // framebuffer texture
+} screen;
+
+// 1x1 white texture
+static Texture *empty_texture;
+
+// TODO split into load and create
 static GLuint create_shader(const char *filename, unsigned type)
 {
     GLint success;
@@ -57,26 +83,16 @@ static GLuint create_shader(const char *filename, unsigned type)
     return id;
 }
 
-static GLuint create_vertex_shader(const char *filename)
-{
-    return create_shader(filename, GL_VERTEX_SHADER);
-}
-
-static GLuint create_fragment_shader(const char *filename)
-{
-    return create_shader(filename, GL_FRAGMENT_SHADER);
-}
-
 static GLuint load_complete_shader(const char *vertex_filename, const char* fragment_filename)
 {
     GLint success;
     GLuint vertex_id, fragment_id, program_id;
 
-    vertex_id = create_vertex_shader(vertex_filename);
+    vertex_id = create_shader(vertex_filename, GL_VERTEX_SHADER);
     if (!vertex_id) {
         return 0;
     }
-    fragment_id = create_fragment_shader(fragment_filename);
+    fragment_id = create_shader(fragment_filename, GL_FRAGMENT_SHADER);
     if (!fragment_id) {
         glDeleteShader(vertex_id);
         return 0;
@@ -108,6 +124,58 @@ static GLuint load_complete_shader(const char *vertex_filename, const char* frag
     return program_id;
 }
 
+Texture* create_texture(void* image_data, u32 width, u32 height)
+{
+    Texture* tex = pool_alloc(&texture_pool);
+
+    if (tex == NULL) {
+        return NULL;
+    }
+
+    tex->id = 0;
+    tex->fb_id = 0;
+    tex->rb_id = 0;
+
+    // Create and load texture
+    glGenTextures(1, &tex->id);
+    glBindTexture(GL_TEXTURE_2D, tex->id);
+
+    /*
+     * Note these affect the bound texture
+     */
+    // TODO maybe don't use GL_NEAREST, maybe clamp it
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    if (image_data != NULL) {
+        /*
+         * Note internal format ideally matches input format
+         * here we use 8 bit normalized (GL_RGBA8), which means
+         * it looks like a float in the shader, but is stored
+         * as 4 8-bit integer (unsigned) components internally
+         */
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA8, // internal format
+            width, height,
+            0,
+            GL_RGBA, GL_UNSIGNED_BYTE, // input format
+            image_data);
+        // we need to do this, even though we aren't using mipmaps
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
+    tex->width = width;
+    tex->height = height;
+
+    dump_errors();
+
+    return tex;
+}
+
 bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
 {
     // Load OpenGL extensions with GLAD
@@ -116,11 +184,23 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         return false;
     }
 
-    GLuint screen_shader_id = load_complete_shader("shaders/screen.vert", "shaders/screen.frag");
-    if (!screen_shader_id) {
+    screen.shader = load_complete_shader("shaders/screen.vert", "shaders/screen.frag");
+    if (!screen.shader) {
         log_error("Failed to create screen shader");
         return false;
     }
+
+    if (!pool_try_create(texture_pool, MAX_TEXTURES,
+                         Texture, mem_alloc)) {
+        return false;
+    }
+
+    glGenVertexArrays(1, &screen.vao);
+    dump_errors();
+
+    // create 1x1 white texture for default/untextured quads
+    u8 buf[4] = {255, 255, 255, 255};
+    empty_texture = create_texture(buf, 1, 1);
 
     return true;
 }

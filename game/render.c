@@ -149,7 +149,8 @@ Texture* create_texture(void* image_data, u32 width, u32 height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    if (image_data != NULL) {
+    // its ok if image_data is NULL
+    //if (image_data != NULL) {
         /*
          * Note internal format ideally matches input format
          * here we use 8 bit normalized (GL_RGBA8), which means
@@ -158,19 +159,79 @@ Texture* create_texture(void* image_data, u32 width, u32 height)
          */
         glTexImage2D(
             GL_TEXTURE_2D,
-            0,
+            0, // mipmap level
             GL_RGBA8, // internal format
             width, height,
-            0,
+            0, // border. has to be 0
             GL_RGBA, GL_UNSIGNED_BYTE, // input format
             image_data);
         // we need to do this, even though we aren't using mipmaps
         glGenerateMipmap(GL_TEXTURE_2D);
-    }
+    //}
 
     tex->width = width;
     tex->height = height;
 
+    dump_errors();
+
+    return tex;
+}
+
+static Texture* create_fb_texture(u32 width, u32 height)
+{
+    Texture* tex = create_texture(NULL, width, height);
+    if (!tex) {
+        return NULL;
+    }
+
+    // create frame buffer
+    glGenFramebuffers(1, &tex->fb_id);
+    glBindFramebuffer(GL_FRAMEBUFFER, tex->fb_id);
+
+    // already done in create_texture
+    // create buffer for texture data
+    //glBindTexture(GL_TEXTURE_2D, tex->id);
+    // NULL for data because we haven't rendered yet
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+    //             width, height, 0,
+    //             GL_RGBA, GL_UNSIGNED_BYTE,
+    //             NULL);
+
+    // attach it to the framebuffer
+    glFramebufferTexture2D(GL_FRAMEBUFFER,
+                           GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, tex->id,
+                           0); // level
+
+    /*
+     * render buffers contain an image
+     * err, they are optimized for rendering better
+     * than textures when don't need to resample after
+     * rendering
+     */
+    // create renderbuffer for depth and stencil
+    glGenRenderbuffers(1, &tex->rb_id);
+    glBindRenderbuffer(GL_RENDERBUFFER, tex->rb_id);
+    // analogous to glTexImage2D - create buffer of this size
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          width, height);
+    // attach to the framebuffer for drawing, for depth and stencil both
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                              GL_DEPTH_STENCIL_ATTACHMENT,
+                              GL_RENDERBUFFER, tex->rb_id);
+
+    // check it worked?
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        log_error("Failed to create frame buffer");
+        // TODO cleanup
+    }
+
+    // unbind stuff - not needed
+    //glBindTexture(GL_TEXTURE_2D, 0);
+    //glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
     dump_errors();
 
     return tex;
@@ -201,6 +262,9 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     // create 1x1 white texture for default/untextured quads
     u8 buf[4] = {255, 255, 255, 255};
     empty_texture = create_texture(buf, 1, 1);
+
+    // texture for the screen triangle, size to the screen
+    screen.texture = create_fb_texture(width, height);
 
     return true;
 }

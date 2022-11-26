@@ -47,6 +47,12 @@ static struct {
 // 1x1 white texture
 static Texture *empty_texture;
 
+static GLint gl_viewport_x = 0;
+static GLint gl_viewport_y = 0;
+static GLsizei gl_viewport_width = 0;
+static GLsizei gl_viewport_height = 0;
+static f32 viewport_aspect = 0;
+
 // TODO split into load and create
 static GLuint create_shader(const char *filename, unsigned type)
 {
@@ -237,6 +243,35 @@ static Texture* create_fb_texture(u32 width, u32 height)
     return tex;
 }
 
+static void resize_screen(u32 width, u32 height)
+{
+    ASSERT(screen.texture);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, screen.texture->fb_id);
+
+    /* resize texture and renderbuffer */
+    glBindTexture(GL_TEXTURE_2D, screen.texture->id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glBindRenderbuffer(GL_RENDERBUFFER, screen.texture->rb_id);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+
+    dump_errors();
+}
+
+void resize_window(u32 width, u32 height)
+{
+    // TODO check glGetIntegerv(GL_MAX_VIEWPORT_DIMS, GLint *max_dims);
+    viewport_aspect = (f32)width / (f32)height;
+    gl_viewport_width = width;
+    gl_viewport_height = height;
+    glViewport(gl_viewport_x, gl_viewport_y, gl_viewport_width, gl_viewport_height);
+    dump_errors();
+    log_debug("Resizing viewport (%d, %d)", gl_viewport_width, gl_viewport_height);
+
+    resize_screen(gl_viewport_width, gl_viewport_height);
+}
+
 bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
 {
     // Load OpenGL extensions with GLAD
@@ -265,6 +300,8 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
 
     // texture for the screen triangle, size to the screen
     screen.texture = create_fb_texture(width, height);
+
+    resize_window(width, height);
 
     return true;
 }

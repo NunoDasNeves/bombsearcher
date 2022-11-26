@@ -12,6 +12,8 @@
 
 bool game_update_and_render()
 {
+    render_start({0,0,0,1});
+    render_end();
     return true;
 }
 

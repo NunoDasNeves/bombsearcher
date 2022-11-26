@@ -44,6 +44,13 @@ static struct {
     Texture *texture; // framebuffer texture
 } screen;
 
+/*
+ * Basic unlit flat shader stuff
+ */
+static struct {
+    GLuint shader;
+} flat;
+
 // 1x1 white texture
 static Texture *empty_texture;
 
@@ -259,7 +266,7 @@ static void resize_screen(u32 width, u32 height)
     dump_errors();
 }
 
-void resize_window(u32 width, u32 height)
+void render_resize(u32 width, u32 height)
 {
     // TODO check glGetIntegerv(GL_MAX_VIEWPORT_DIMS, GLint *max_dims);
     viewport_aspect = (f32)width / (f32)height;
@@ -270,6 +277,51 @@ void resize_window(u32 width, u32 height)
     log_debug("Resizing viewport (%d, %d)", gl_viewport_width, gl_viewport_height);
 
     resize_screen(gl_viewport_width, gl_viewport_height);
+}
+
+/* render screen triangle */
+void render_end()
+{
+    ASSERT(screen.texture != NULL);
+
+    /* set default framebuffer - the one that will display in the viewport */
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glClearColor(1, 0, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // drawing mode fill, disable alpha blend...
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_BLEND);
+
+    // Set current shader program
+    glUseProgram(screen.shader);
+    // Set texture uniform
+    // NOTE for a single texture active texture unit is 0 by default, and uniform is set to that texure unit
+    // each sampler needs a different texture unit
+    GLint loc = glGetUniformLocation(screen.shader, "screen_texture");
+    glUniform1i(loc, 0); // put 0 into uniform sampler, which corresponds to TEXTURE0 (which is not 0, itself)
+    glActiveTexture(GL_TEXTURE0); // set active texture to texture unit 0
+    glBindTexture(GL_TEXTURE_2D, screen.texture->id); // bind to texture unit 0
+
+    glBindVertexArray(screen.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    dump_errors();
+}
+
+void render_start(Color color)
+{
+    assert(screen.texture != NULL);
+
+    /* set the screen frame buffer - we want to draw to the screen texture */
+    glBindFramebuffer(GL_FRAMEBUFFER, screen.texture->fb_id);
+    glClearColor(color.r, color.g, color.b, color.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(flat.shader);
+
+    dump_errors();
 }
 
 bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
@@ -283,6 +335,12 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     screen.shader = load_complete_shader("shaders/screen.vert", "shaders/screen.frag");
     if (!screen.shader) {
         log_error("Failed to create screen shader");
+        return false;
+    }
+
+    flat.shader = load_complete_shader("shaders/flat.vert", "shaders/flat.frag");
+    if (!flat.shader) {
+        log_error("Failed to create flat shader");
         return false;
     }
 
@@ -301,7 +359,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     // texture for the screen triangle, size to the screen
     screen.texture = create_fb_texture(width, height);
 
-    resize_window(width, height);
+    render_resize(width, height);
 
     return true;
 }

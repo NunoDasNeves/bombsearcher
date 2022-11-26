@@ -42,7 +42,7 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
                 {
                     int width, height;
                     SDL_GL_GetDrawableSize(window, &width, &height);
-                    //resize_window(width, height);
+                    render_resize(width, height);
                     break;
                 }
             }

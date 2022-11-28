@@ -49,8 +49,8 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
     glGenBuffers(1, &geom->ebo);
     glBindVertexArray(geom->vao);
     glBindBuffer(GL_ARRAY_BUFFER, geom->vbo);
-    glBufferData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(f32),
-                 verts, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verts),
+                 verts, GL_STATIC_DRAW);
     dump_errors();
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, // number of floats in a vert
@@ -64,11 +64,9 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
     dump_errors();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geom->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),
-                 indices, GL_DYNAMIC_DRAW);
+                 indices, GL_STATIC_DRAW);
 
     dump_errors();
-
-    glBindVertexArray(0);
 
     /*
     glDeleteBuffers(1, &geom->vbo);
@@ -91,7 +89,6 @@ void draw_cell(Geom *geom, Cell *cell)
     glBindVertexArray(geom->vao);
     glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
                    GL_UNSIGNED_INT, 0); // offset
-    glBindVertexArray(0);
 }
 
 void draw_board(Board *board)

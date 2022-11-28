@@ -318,18 +318,6 @@ void render_end()
 
     // Set current shader program
     glUseProgram(screen.shader);
-    // Set texture uniform
-    // NOTE for a single texture active texture unit is 0 by default, and uniform is set to that texure unit
-    // each sampler needs a different texture unit
-    /*
-    GLint loc = glGetUniformLocation(screen.shader, "screen_texture");
-    glUniform1i(loc, 0); // put 0 into uniform sampler, which corresponds to TEXTURE0 (which is not 0, itself)
-    dump_errors();
-    glActiveTexture(GL_TEXTURE0);
-    dump_errors();
-    glBindTexture(GL_TEXTURE_2D, screen.texture->id);
-    dump_errors();
-    */
 
     glBindVertexArray(screen.vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -370,6 +358,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         log_error("Failed to create flat shader");
         return false;
     }
+
     // we want the origin to be in the top left
     Mat4 proj_matrix = mat4_ortho(0, (f32)width,  // left at 0, right at pixel width
                                   (f32)height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
@@ -396,7 +385,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
 
     // texture for the screen triangle, size to the screen
     screen.texture = create_fb_texture(width, height);
-    shader_set_texture(screen.shader, empty_texture);
+    shader_set_texture(screen.shader, screen.texture);
 
     render_resize(width, height);
 

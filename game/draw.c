@@ -3,10 +3,19 @@
 #include"log.h"
 #include"render.h"
 #include"game.h"
+#include"mem.h"
 
 #define CELL_WIDTH 20
 
+typedef struct {
+    u32 num_tris;
+    GLuint vao;
+    GLuint vbo;
+    GLuint ebo;
+} Geom;
+
 Color background_color = {{0,0,0,1}};
+Geom *cell_geoms;
 
 void draw_cell(u32 col, u32 row, Cell *cell)
 {
@@ -40,13 +49,14 @@ void draw_cell(u32 col, u32 row, Cell *cell)
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    Geom *geom = cell_geoms;
+
     // init
-    GLuint vao, vbo, ebo;
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glGenVertexArrays(1, &geom->vao);
+    glGenBuffers(1, &geom->vbo);
+    glGenBuffers(1, &geom->ebo);
+    glBindVertexArray(geom->vao);
+    glBindBuffer(GL_ARRAY_BUFFER, geom->vbo);
     glBufferData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(f32),
                  verts, GL_DYNAMIC_DRAW);
     dump_errors();
@@ -60,21 +70,21 @@ void draw_cell(u32 col, u32 row, Cell *cell)
     //                      (3+2) * sizeof(f32), // stride
     //                      (void*)(3*sizeof(f32)));
     dump_errors();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geom->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),
                  indices, GL_DYNAMIC_DRAW);
 
     // usage
     // glUseProgram(shader_id);
-    glBindVertexArray(vao);
+    glBindVertexArray(geom->vao);
     glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
                    GL_UNSIGNED_INT, 0); // offset
 
     dump_errors();
 
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
-    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &geom->vbo);
+    glDeleteBuffers(1, &geom->ebo);
+    glDeleteVertexArrays(1, &geom->vao);
 
     dump_errors();
 }
@@ -97,7 +107,20 @@ void draw_game()
     render_end();
 }
 
-void draw_init()
+bool draw_init()
 {
+    Board *board = &game_state.board;
 
+    cell_geoms = mem_alloc(sizeof(Geom)*board->width*board->height);
+    if (!cell_geoms) {
+        return false;
+    }
+    for(u32 r = 0; r < board->height; ++r) {
+        u32 r_off = r * board->width;
+        for(u32 c = 0; c < board->width; ++c) {
+            //init_cell_geom(&cell_geoms[r_off + c],
+            //               c, r, &board->cells[r_off + c]);
+        }
+    }
+    return true;
 }

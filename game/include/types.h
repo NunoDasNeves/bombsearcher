@@ -46,6 +46,8 @@ typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
 
+#define ARRAY_LEN(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #ifdef __GNUC__
 
 #define CLZ_U64(x) \

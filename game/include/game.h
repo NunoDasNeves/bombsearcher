@@ -40,10 +40,8 @@ typedef struct {
 
 extern GameState game_state;
 
-void draw_cell(u32 col, u32 row, Cell *cell);
-void draw_board(Board *board);
 void draw_game();
-void draw_init();
+bool draw_init();
 
 bool game_update_and_render();
 bool game_init();

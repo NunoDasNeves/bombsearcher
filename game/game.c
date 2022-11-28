@@ -25,7 +25,9 @@ bool game_init()
         return false;
     }
 
-    draw_init();
+    if (!draw_init()) {
+        log_error("Failed to init draw");
+    }
 
     return true;
 }

@@ -31,9 +31,10 @@ static void *bump_alloc(struct BumpAllocator *allocator, u64 req_size)
     ASSERT(allocator->base);
     ASSERT(allocator->next_free);
 
-    void *ret = allocator->next_free;
-    char *base = (char*)allocator->base;
-    char *new_free = base + req_size;
+    char *base = (char *)allocator->base;
+    char *next_free = (char *)allocator->next_free;
+    void *ret = next_free;
+    char *new_free = next_free + req_size;
     if (new_free > base + allocator->size) {
         return NULL;
     }
@@ -138,7 +139,7 @@ static bool _pool_try_create(struct PoolAllocator *pool,
     ASSERT(name);
 
     size_t mem_size = num_objs*obj_size;
-    void *mem = alloc_fn(obj_size);
+    void *mem = alloc_fn(mem_size);
 
     if (mem == NULL) {
         log_error("Failed to alloc %s", name);

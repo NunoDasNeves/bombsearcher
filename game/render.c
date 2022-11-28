@@ -371,8 +371,8 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         return false;
     }
     // we want the origin to be in the top left
-    Mat4 proj_matrix = mat4_ortho(0, width,  // left at 0, right at pixel width
-                                  height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
+    Mat4 proj_matrix = mat4_ortho(0, (f32)width,  // left at 0, right at pixel width
+                                  (f32)height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
                                   -1, 1);
     Mat4 view_matrix = mat4_ident();
     Mat4 model_matrix = mat4_ident();

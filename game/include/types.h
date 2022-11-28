@@ -95,6 +95,7 @@ typedef double f64;
     ) \
 
 // some simple tests
+#ifdef __GNUC__
 static_assert(CLZ_U64(0) == 64, "CLZ");
 static_assert(CLZ_U64(1) == 63, "CLZ");
 static_assert(CLZ_U64(1ULL<<62) == 1, "CLZ");
@@ -152,5 +153,6 @@ static_assert(IS_POW_2(1ULL<<62), "IS_POW_2");
 static_assert(!IS_POW_2((1ULL<<62) + 1), "IS_POW_2");
 static_assert(IS_POW_2(1ULL<<63), "IS_POW_2");
 static_assert(!IS_POW_2((1ULL<<63) + 1), "IS_POW_2");
+#endif
 
 C_END

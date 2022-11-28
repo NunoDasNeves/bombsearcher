@@ -15,7 +15,8 @@ set ADDITIONAL_FLAGS=/DDEBUG /DTEST -DPLATFORM_GL_MAJOR_VERSION=3 -DPLATFORM_GL_
 :: /wd4189  local variable is initialized but not referenced
 :: /wd4996  'strncat': This function or variable may be unsafe. Consider using strncat_s instead.
 :: /wd4505  unreferenced local function has been removed
-set DISABLED_WARNINGS=/wd4100 /wd4189 /wd4996 /wd4505
+:: /wd4201  non standard extension: nameless struct
+set DISABLED_WARNINGS=/wd4100 /wd4189 /wd4996 /wd4505 /wd4201
 
 :: Compiler flags
 :: /std     use this version of c++
@@ -32,7 +33,9 @@ set DISABLED_WARNINGS=/wd4100 /wd4189 /wd4996 /wd4505
 :: not set
 :: /I       Additional include directory
 :: /P       Preprocessor output to file
-set COMMON_COMPILER_FLAGS=/std:c++17 /Oi /GR- /EHa- /nologo /W4 /MT /Gm- /Z7 /Fm %DISABLED_WARNINGS% /Fe%EXE_NAME% /I ..\game\include
+set COMMON_COMPILER_FLAGS=/Oi /GR- /EHa- /nologo /W4 /MT /Gm- /Z7 /Fm %DISABLED_WARNINGS% /Fe%EXE_NAME% /I ..\game\include
+set CPP_FLAG=/std:c++17
+set C_FLAG=/std:c11
 set PLATFORM_COMPILER_FLAGS=/I %SDL_DIR%\include /I %STB_DIR% /I %IMGUI_DIR%\backends /I %IMGUI_DIR% /I %GLAD_DIR%\include
 set COMPILER_FLAGS=%COMMON_COMPILER_FLAGS% %PLATFORM_COMPILER_FLAGS%
 
@@ -46,8 +49,8 @@ set COMMON_LINKER_FLAGS=/OUT:%EXE_NAME% /INCREMENTAL:NO /SUBSYSTEM:CONSOLE
 set LINKER_FLAGS=%COMMON_LINKER_FLAGS% %PLATFORM_LINKER_FLAGS% /DEBUG:FULL
 
 set IMGUI_SOURCES=%IMGUI_DIR%\backends\imgui_impl_sdl.cpp %IMGUI_DIR%\backends\imgui_impl_opengl3.cpp %IMGUI_DIR%\imgui*.cpp
-set GAME_SOURCES=..\game\main.cpp ..\game\windows.c ..\game\log.c ..\game\mem.c ..\game\render.c ..\game\game.cpp ..\game\file.c
-set SOURCES=%GAME_SOURCES% %IMGUI_SOURCES% %GLAD_DIR%\glad.c
+set GAME_CPP_SOURCES=..\game\main.cpp
+set GAME_C_SOURCES=..\game\windows.c ..\game\log.c ..\game\mem.c ..\game\render.c ..\game\game.c ..\game\file.c ..\game\draw.c
 
 :: Create build directory
 IF NOT EXIST build mkdir build
@@ -58,8 +61,19 @@ IF EXIST %EXE_NAME% del %EXE_NAME%
 :: Preprocess only
 :: cl /P %SOURCES% %COMPILER_FLAGS% %ADDITIONAL_FLAGS%
 
-:: Build executable
-cl %SOURCES% %COMPILER_FLAGS% %ADDITIONAL_FLAGS% /link %LINKER_FLAGS%
+::echo "Compiling glad"
+::cl -c %GLAD_DIR%\glad.c %COMPILER_FLAGS% %ADDITIONAL_FLAGS%
+
+::echo "Compiling imgui"
+::cl -c %IMGUI_SOURCES% %COMPILER_FLAGS% %ADDITIONAL_FLAGS% /link %LINKER_FLAGS%
+
+echo "Compiling game cpp"
+cl -c %GAME_CPP_SOURCES% %CPP_FLAG% %COMPILER_FLAGS% %ADDITIONAL_FLAGS% /link %LINKER_FLAGS%
+echo "Compiling game c"
+cl -c %GAME_C_SOURCES% %C_FLAG% %COMPILER_FLAGS% %ADDITIONAL_FLAGS% /link %LINKER_FLAGS%
+
+echo "Linking"
+cl *.obj %COMPILER_FLAGS% /link %LINKER_FLAGS%
 
 popd
 copy build\%EXE_NAME% .

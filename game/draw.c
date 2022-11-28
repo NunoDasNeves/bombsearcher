@@ -19,8 +19,8 @@ Geom *cell_geoms;
 
 void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 {
-    f32 pos_x = col * (CELL_WIDTH + 10);
-    f32 pos_y = row * (CELL_WIDTH + 10);
+    f32 pos_x = (f32)col * (CELL_WIDTH + 10);
+    f32 pos_y = (f32)row * (CELL_WIDTH + 10);
     f32 width = CELL_WIDTH;
     f32 height = CELL_WIDTH;
 

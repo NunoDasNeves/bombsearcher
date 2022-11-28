@@ -1,10 +1,16 @@
 #include<stddef.h>
-#include<stdalign.h>
 #include<string.h>
 #include"types.h"
 #include"platform.h"
 #include"mem.h"
 #include"allocator.h"
+#ifdef _WIN32
+typedef struct {
+    void* x;
+} max_align_t;
+#endif
+#include<stdalign.h>
+#define max_alignment alignof(max_align_t)
 
 C_BEGIN
 
@@ -166,7 +172,7 @@ void *mem_alloc_nofree(u64 size)
 {
     ASSERT(nofree.bump.base);
 
-    u64 align = alignof(max_align_t);
+    u64 align = max_alignment;
     ASSERT(align >= sizeof(void*));
     ASSERT((size + align - 1) > size);
 

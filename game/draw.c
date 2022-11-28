@@ -17,7 +17,7 @@ typedef struct {
 Color background_color = {{0,0,0,1}};
 Geom *cell_geoms;
 
-void draw_cell(u32 col, u32 row, Cell *cell)
+void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 {
     f32 pos_x = col * (CELL_WIDTH + 10);
     f32 pos_y = row * (CELL_WIDTH + 10);
@@ -43,14 +43,6 @@ void draw_cell(u32 col, u32 row, Cell *cell)
         3,2,1
     };
 
-    //glLineWidth(1);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    Geom *geom = cell_geoms;
-
     // init
     glGenVertexArrays(1, &geom->vao);
     glGenBuffers(1, &geom->vbo);
@@ -74,19 +66,32 @@ void draw_cell(u32 col, u32 row, Cell *cell)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),
                  indices, GL_DYNAMIC_DRAW);
 
-    // usage
-    // glUseProgram(shader_id);
-    glBindVertexArray(geom->vao);
-    glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
-                   GL_UNSIGNED_INT, 0); // offset
-
     dump_errors();
 
+    glBindVertexArray(0);
+
+    /*
     glDeleteBuffers(1, &geom->vbo);
     glDeleteBuffers(1, &geom->ebo);
     glDeleteVertexArrays(1, &geom->vao);
 
     dump_errors();
+    */
+}
+
+void draw_cell(Geom *geom, Cell *cell)
+{
+    //glLineWidth(1);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // usage
+    // glUseProgram(shader_id);
+    glBindVertexArray(geom->vao);
+    glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
+                   GL_UNSIGNED_INT, 0); // offset
+    glBindVertexArray(0);
 }
 
 void draw_board(Board *board)
@@ -94,7 +99,7 @@ void draw_board(Board *board)
     for(u32 r = 0; r < board->height; ++r) {
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
-            draw_cell(c, r, &board->cells[r_off + c]);
+            draw_cell(&cell_geoms[r_off + c], &board->cells[r_off + c]);
         }
     }
 }
@@ -118,8 +123,8 @@ bool draw_init()
     for(u32 r = 0; r < board->height; ++r) {
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
-            //init_cell_geom(&cell_geoms[r_off + c],
-            //               c, r, &board->cells[r_off + c]);
+            init_cell_geom(&cell_geoms[r_off + c],
+                           c, r, &board->cells[r_off + c]);
         }
     }
     return true;

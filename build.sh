@@ -17,11 +17,27 @@ COMPILER_FLAGS="-c -Wall -Wno-unused-function -Wno-unused-variable -Wno-unused-b
 
 LINKER_FLAGS="$(sdl2-config --libs --cflags) -ldl"
 
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -l|--libs)
+            BUILD_LIBS=1
+            shift
+            ;;
+        -*|--*)
+            echo "Unknown option $1"
+            exit 1
+            ;;
+        *)
+            echo "Unknown arg $1"
+            exit 1
+            ;;
+    esac
+done
+
 mkdir -p "${BUILD_DIR}"
 pushd "${BUILD_DIR}"
 
-
-if [ $(false) ]
+if [ -n "$BUILD_LIBS" ]
 then
     echo "compiling glad"
     g++ ${GLAD_DIR}/*.c ${COMPILER_FLAGS} "-I${GLAD_DIR}/include" "${OTHER_FLAGS}" || exit 1
@@ -37,12 +53,15 @@ then
         "-I${SDL_INCLUDE_DIR}" || exit 1
 fi
 
-echo "compiling game .c files"
+echo "compiling game .c files:"
+echo "${GAME_C_SRCS}"
 gcc ${GAME_C_SRCS} ${COMPILER_FLAGS} ${GAME_INCLUDE_DIRS} ${OTHER_FLAGS} || exit 1
-echo "compiling game .cpp files"
+echo "compiling game .cpp files:"
+echo "${GAME_CPP_SRCS}"
 g++ ${GAME_CPP_SRCS} ${COMPILER_FLAGS} ${GAME_INCLUDE_DIRS} ${OTHER_FLAGS} || exit 1
 
-echo "linking"
+echo "linking .o files:"
+echo *.o
 g++ *.o ${LINKER_FLAGS} -o ${EXECUTABLE_NAME} || exit 1
 echo "done"
 

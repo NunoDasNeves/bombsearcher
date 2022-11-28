@@ -1,7 +1,4 @@
 #pragma once
-#include<stdint.h>
-#include<stdbool.h>
-#include<assert.h>
 #include"types.h"
 
 C_BEGIN

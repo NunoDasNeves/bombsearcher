@@ -1,6 +1,7 @@
 #pragma once
 #include<assert.h>
 #include<stdint.h>
+#include<stddef.h>
 #include<limits.h>
 #include<stdbool.h>
 #define __STDC_FORMAT_MACROS 1

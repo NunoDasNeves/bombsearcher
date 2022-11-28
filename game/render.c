@@ -6,6 +6,7 @@
 #include"file.h"
 #include"allocator.h"
 #include"mem.h"
+#include"matrix.h"
 
 C_BEGIN
 
@@ -44,6 +45,42 @@ static GLint gl_viewport_y = 0;
 static GLsizei gl_viewport_width = 0;
 static GLsizei gl_viewport_height = 0;
 static f32 viewport_aspect = 0;
+
+static void shader_set_texture(GLuint shader_id,
+                               Texture* texture)
+{
+    GLint loc;
+
+    glUseProgram(shader_id);
+
+    loc = glGetUniformLocation(shader_id, "tex");
+    glUniform1i(loc, 0); // put 0 into uniform sampler, corresponding to TEXTURE0
+    glActiveTexture(GL_TEXTURE0); // texture unit 0 (whose value is not 0)
+    glBindTexture(GL_TEXTURE_2D, texture->id); // bind to texture unit 0
+
+    dump_errors();
+}
+
+static void shader_set_transform(GLuint shader_id,
+                                 const Mat4 *projection,
+                                 const Mat4 *view,
+                                 const Mat4 *model)
+{
+    GLint loc;
+
+    glUseProgram(shader_id);
+
+    loc = glGetUniformLocation(shader_id, "projection");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, projection->data);
+
+    loc = glGetUniformLocation(shader_id, "view");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, view->data);
+
+    loc = glGetUniformLocation(shader_id, "model");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, model->data);
+
+    dump_errors();
+}
 
 // TODO split into load and create
 static GLuint create_shader(const char *filename, unsigned type)
@@ -328,6 +365,13 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         log_error("Failed to create flat shader");
         return false;
     }
+    Mat4 proj_matrix = mat4_ortho(0, width, 0, -height, -1, 1);
+    Mat4 view_matrix = mat4_ident();
+    Mat4 model_matrix = mat4_ident();
+    shader_set_transform(flat.shader,
+                         &proj_matrix,
+                         &view_matrix,
+                         &model_matrix);
 
     if (!pool_try_create(texture_pool, MAX_TEXTURES,
                          Texture, mem_alloc)) {
@@ -340,6 +384,8 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     // create 1x1 white texture for default/untextured quads
     u8 buf[4] = {255, 255, 255, 255};
     empty_texture = create_texture(buf, 1, 1);
+
+    shader_set_texture(flat.shader, empty_texture);
 
     // texture for the screen triangle, size to the screen
     screen.texture = create_fb_texture(width, height);

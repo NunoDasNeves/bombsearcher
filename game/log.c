@@ -161,13 +161,14 @@ void log_timestamp(const char *fmt, ...)
             // overwrite the last char before the null
             end = &buf[remaining - 2];
         } else {
-            // extend string by 1 char for \n
-            len += result + 1;
-            // append another null char
-            buf[len] = '\0';
-            // replace first null char
+            // save the position of null char for \n to be inserted
             end = &buf[result];
+            // append another null char after the existing one
+            buf[result + 1] = '\0';
+            // extend final string by the right amount
+            len += result + 1;
         }
+        // replace last char, or null char (depending on above)
         *end = '\n';
         // replace \n's with spaces, not including the final \n
         for (start = buf; start < end; ++start) {

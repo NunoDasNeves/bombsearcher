@@ -6,13 +6,10 @@
 #include"game.h"
 
 GameState game_state;
-Color background_color = {{0,0,0,1}};
 
 bool game_update_and_render()
 {
-    render_start(background_color);
-    //draw_board(game_state.board);
-    render_end();
+    draw_game();
     return true;
 }
 
@@ -27,6 +24,8 @@ bool game_init()
         log_error("Failed to allocate board");
         return false;
     }
+
+    draw_init();
 
     return true;
 }

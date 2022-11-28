@@ -365,7 +365,9 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         log_error("Failed to create flat shader");
         return false;
     }
-    Mat4 proj_matrix = mat4_ortho(0, width, 0, -height, -1, 1);
+    Mat4 proj_matrix = mat4_ortho(0, width,  // left at 0, right at pixel width
+                                  height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
+                                  -1, 1);
     Mat4 view_matrix = mat4_ident();
     Mat4 model_matrix = mat4_ident();
     shader_set_transform(flat.shader,

@@ -31,28 +31,3 @@ bool game_init()
     return true;
 }
 
-/*
-void draw_cell(u32 col, u32 row, Cell *cell)
-{
-    //Texture *tex = tex_unexplored;
-    //switch (cell->state) {
-    //    case (CELL_
-    //}
-    render_2d_quad(Vec2(col * CELL_WIDTH, row * CELL_WIDTH),
-                   Vec2(CELL_WIDTH, CELL_WIDTH),
-                   NULL, // texture
-                   color(),
-                   false); // wireframe
-
-}
-
-void draw_board(Board *board)
-{
-    for(u32 r = 0; r < board->height; ++r) {
-        u32 r_off = r * board->width;
-        for(u32 c = 0; c < board->width; ++c) {
-            draw_cell(c, r, board->cells[r_off + c]);
-        }
-    }
-}
-*/

@@ -9,26 +9,11 @@
 
 C_BEGIN
 
-#define dump_errors() \
-do {                                                \
-    GLenum __err; \
-    while ((__err = glGetError()) != GL_NO_ERROR) { \
-        log_error("openGL error 0x%x", __err);      \
-    }                                               \
-} while(0)
-
 // buffer for loading errors from opengl
 #define INFO_LOG_SIZE 512
 static char info_log[INFO_LOG_SIZE];
 
 #define MAX_TEXTURES 256
-typedef struct _Texture {
-    GLuint id;
-    GLuint fb_id;
-    GLuint rb_id;
-    u32 width;
-    u32 height;
-} Texture;
 struct PoolAllocator texture_pool;
 
 /*

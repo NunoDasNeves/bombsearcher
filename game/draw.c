@@ -17,6 +17,8 @@ typedef struct {
 Color background_color = {{0,0,0,1}};
 Geom *cell_geoms;
 
+Texture *cell_texture;
+
 void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 {
     f32 pos_x = (f32)col * (CELL_WIDTH + 10);
@@ -124,5 +126,8 @@ bool draw_init()
                            c, r, &board->cells[r_off + c]);
         }
     }
+
+    cell_texture = load_texture("assets/cell.png");
+
     return true;
 }

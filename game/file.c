@@ -1,5 +1,7 @@
 #include<stdio.h>
 #include<SDL.h>
+#include"stb_image.h"
+
 #include"types.h"
 #include"log.h"
 #include"mem.h"
@@ -72,6 +74,33 @@ err_free_buffer:
 err_close_file:
     SDL_RWclose(file);
     return NULL;
+}
+
+unsigned char *image_file_read(const char *filename, u64 *size, u32 *width, u32 *height)
+{
+    u64 len = 0;
+    int s_width, s_height, n_channels;
+
+    char *file_buf = file_read(filename, &len, false);
+    if (file_buf == NULL) {
+        log_error("Failed to load image file: \"%s\"", filename);
+        return NULL;
+    }
+    if (len > INT_MAX) {
+        log_error("Image file too big");
+        return NULL;
+    }
+
+    unsigned char *image_buf = stbi_load_from_memory((unsigned char*)file_buf, (int)len, &s_width, &s_height, &n_channels, STBI_rgb_alpha);
+    if (image_buf == NULL) {
+        log_error("STB failed to load image: \"%s\"", stbi_failure_reason());
+        return NULL;
+    }
+    *width = (int)s_width;
+    *height = (int)s_height;
+    *size = len;
+
+    return image_buf;
 }
 
 C_END

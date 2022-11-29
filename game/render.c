@@ -83,11 +83,11 @@ static void shader_set_transform(GLuint shader_id,
 }
 
 // TODO split into load and create
-static GLuint create_shader(const char *filename, unsigned type)
+static GLuint load_shader(const char *filename, unsigned type)
 {
     GLint success;
     GLuint id;
-    u64 len = 0;
+    u64 len;
     GLchar const*shader_code;
 
     ASSERT(filename);
@@ -95,7 +95,7 @@ static GLuint create_shader(const char *filename, unsigned type)
     log_debug("Loading shader \"%s\"", filename);
 
     // read in shader source
-    shader_code = file_read(filename, &len, true);
+    shader_code = file_read_to_string(filename, &len);
     if (!shader_code) {
         log_error("Failed to load shader source");
         return 0;
@@ -118,16 +118,16 @@ static GLuint create_shader(const char *filename, unsigned type)
     return id;
 }
 
-static GLuint load_complete_shader(const char *vertex_filename, const char* fragment_filename)
+static GLuint create_shader_program(const char *vertex_filename, const char* fragment_filename)
 {
     GLint success;
     GLuint vertex_id, fragment_id, program_id;
 
-    vertex_id = create_shader(vertex_filename, GL_VERTEX_SHADER);
+    vertex_id = load_shader(vertex_filename, GL_VERTEX_SHADER);
     if (!vertex_id) {
         return 0;
     }
-    fragment_id = create_shader(fragment_filename, GL_FRAGMENT_SHADER);
+    fragment_id = load_shader(fragment_filename, GL_FRAGMENT_SHADER);
     if (!fragment_id) {
         glDeleteShader(vertex_id);
         return 0;
@@ -184,25 +184,22 @@ Texture* create_texture(void* image_data, u32 width, u32 height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    // its ok if image_data is NULL
-    //if (image_data != NULL) {
-        /*
-         * Note internal format ideally matches input format
-         * here we use 8 bit normalized (GL_RGBA8), which means
-         * it looks like a float in the shader, but is stored
-         * as 4 8-bit integer (unsigned) components internally
-         */
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0, // mipmap level
-            GL_RGBA8, // internal format
-            width, height,
-            0, // border. has to be 0
-            GL_RGBA, GL_UNSIGNED_BYTE, // input format
-            image_data);
-        // we need to do this, even though we aren't using mipmaps
-        glGenerateMipmap(GL_TEXTURE_2D);
-    //}
+    /*
+        * Note internal format ideally matches input format
+        * here we use 8 bit normalized (GL_RGBA8), which means
+        * it looks like a float in the shader, but is stored
+        * as 4 8-bit integer (unsigned) components internally
+        */
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0, // mipmap level
+        GL_RGBA8, // internal format
+        width, height,
+        0, // border. has to be 0
+        GL_RGBA, GL_UNSIGNED_BYTE, // input format
+        image_data); // it's ok if image_data is NULL; the buffer will still be created
+    // we need to do this, even though we aren't using mipmaps
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     tex->width = width;
     tex->height = height;
@@ -272,6 +269,26 @@ static Texture* create_fb_texture(u32 width, u32 height)
     return tex;
 }
 
+Texture *load_texture(const char* filename)
+{
+    u64 size;
+    u32 width, height;
+    unsigned char *image_data;
+
+    ASSERT(filename);
+
+    log_debug("Loading texture \"%s\"", filename);
+
+    // read in shader source
+    image_data = image_file_read(filename, &size, &width, &height);
+    if (image_data == NULL) {
+        log_error("Failed to load texture \"%s\"", filename);
+        return NULL;
+    }
+
+    return create_texture(image_data, width, height);
+}
+
 static void resize_screen(u32 width, u32 height)
 {
     ASSERT(screen.texture);
@@ -305,6 +322,8 @@ void render_resize(u32 width, u32 height)
 void render_end()
 {
     ASSERT(screen.texture != NULL);
+
+    shader_set_texture(screen.shader, screen.texture);
 
     /* set default framebuffer - the one that will display in the viewport */
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -347,13 +366,13 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         return false;
     }
 
-    screen.shader = load_complete_shader("shaders/screen.vert", "shaders/screen.frag");
+    screen.shader = create_shader_program("shaders/screen.vert", "shaders/screen.frag");
     if (!screen.shader) {
         log_error("Failed to create screen shader");
         return false;
     }
 
-    flat.shader = load_complete_shader("shaders/flat.vert", "shaders/flat.frag");
+    flat.shader = create_shader_program("shaders/flat.vert", "shaders/flat.frag");
     if (!flat.shader) {
         log_error("Failed to create flat shader");
         return false;

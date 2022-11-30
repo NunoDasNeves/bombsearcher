@@ -33,7 +33,7 @@ static struct {
 GLuint shader_flat;
 
 // 1x1 white texture
-static Texture *empty_texture;
+Texture *empty_texture;
 
 static GLint gl_viewport_x = 0;
 static GLint gl_viewport_y = 0;

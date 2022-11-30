@@ -24,7 +24,36 @@ typedef struct {
     f32 tex[2];
 } Vertex;
 
-Texture *cell_texture;
+/* macro magic! put all texture stuff here */
+#define TEXTURES(op) \
+    op("cell_up", CELL_UP, 0) \
+    op("cell_down", CELL_DOWN, 1) \
+    op("flag", FLAG, 2) \
+    op("bomb", BOMB, 3) \
+    op("numbers", NUMBERS, 4)
+
+#define TEX_ENUM(s, e, n) \
+    TEX_##e = n,
+
+/* e.g. TEX_GET(CELL_DOWN); */
+#define TEX_GET(e) \
+    textures[TEX_##e]
+
+#define TEX_LOAD(s, e, n) \
+    do {    \
+        textures[TEX_##e] = load_texture("assets/"s".png"); \
+        if (!textures[TEX_##e]) {   \
+            log_error("Failed to load texture: "s); \
+            textures[TEX_##e] = empty_texture;  \
+        }   \
+    } while (0);
+
+enum {
+    TEXTURES(TEX_ENUM)
+    TEX_NUM_TEXTURES
+};
+
+Texture *textures[TEX_NUM_TEXTURES] = {0};
 
 void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 {
@@ -96,7 +125,7 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 
 void draw_cell(Geom *geom, Cell *cell)
 {
-    shader_set_texture(shader_flat, cell_texture); // this does glUseProgram(shader_id);
+    shader_set_texture(shader_flat, TEX_GET(CELL_UP)); // this does glUseProgram(shader_id);
 
     //glLineWidth(1);
     /* not needed really
@@ -152,7 +181,7 @@ bool draw_init()
         }
     }
 
-    cell_texture = load_texture("assets/cell.png");
+    TEXTURES(TEX_LOAD);
 
     return true;
 }

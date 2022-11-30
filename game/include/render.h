@@ -25,6 +25,7 @@ typedef struct {
     u32 width;
     u32 height;
 } Texture;
+extern Texture *empty_texture;
 
 void shader_set_texture(GLuint shader_id, Texture* texture);
 

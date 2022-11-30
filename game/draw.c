@@ -5,8 +5,6 @@
 #include"game.h"
 #include"mem.h"
 
-#define CELL_WIDTH 40
-
 typedef struct {
     u32 num_tris;
     GLuint vao;
@@ -14,7 +12,7 @@ typedef struct {
     GLuint ebo;
 } Geom;
 
-Color background_color = {{0,0,0,1}};
+Color background_color = COLOR_RGB8(40,40,40);
 Geom *cell_geoms;
 
 #define VERTEX_POS_ARRAY_ATTRIB 0
@@ -57,10 +55,13 @@ Texture *textures[TEX_NUM_TEXTURES] = {0};
 
 void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 {
-    f32 pos_x = (f32)col * (CELL_WIDTH + 10);
-    f32 pos_y = (f32)row * (CELL_WIDTH + 10);
-    f32 width = CELL_WIDTH;
-    f32 height = CELL_WIDTH;
+    static const f32 x_off = CELLS_SECTION_BORDER;
+    static const f32 y_off = TOP_SECTION_HEIGHT + CELLS_SECTION_BORDER;
+
+    f32 pos_x = x_off + (f32)col * CELL_PIXEL_WIDTH;
+    f32 pos_y = y_off + (f32)row * CELL_PIXEL_WIDTH;
+    f32 width = CELL_PIXEL_WIDTH;
+    f32 height = CELL_PIXEL_WIDTH;
 
     Vertex verts[] = {
         {
@@ -182,6 +183,9 @@ bool draw_init()
     }
 
     TEXTURES(TEX_LOAD);
+
+    //render_resize(CELLS_SECTION_BORDER * 2 + board->width * CELL_PIXEL_WIDTH,
+    //              CELLS_SECTION_BORDER * 2 + board->height * CELL_PIXEL_WIDTH + TOP_SECTION_HEIGHT);
 
     return true;
 }

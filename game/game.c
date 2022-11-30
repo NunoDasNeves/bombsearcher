@@ -17,8 +17,8 @@ bool game_init()
 {
     Board *board = &game_state.board;
 
-    board->width = 9;
-    board->height = 9;
+    board->width = CELLS_NUM_X_EASY;
+    board->height = CELLS_NUM_Y_EASY;
     board->cells = mem_alloc(sizeof(Cell)*9*9);
     if (!board->cells) {
         log_error("Failed to allocate board");

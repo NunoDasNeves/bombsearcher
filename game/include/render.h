@@ -18,6 +18,15 @@ typedef union {
     f32 data[4];
 } Color;
 
+static Color color_rgb8(u8 r, u8 g, u8 b)
+{
+    Color c = {{r/255.0f, g/255.0f, b/255.0f, 1.0f}};
+    return c;
+}
+
+#define COLOR_RGB8(r,g,b) \
+    {.data = {r/255.0f, g/255.0f, b/255.0f, 1.0f}}
+
 typedef struct {
     GLuint id;
     GLuint fb_id;

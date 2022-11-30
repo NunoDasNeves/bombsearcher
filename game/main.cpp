@@ -20,9 +20,6 @@
 
 bool keep_running = true;
 
-const int GAME_WINDOW_WIDTH = 960;
-const int GAME_WINDOW_HEIGHT = 680;
-
 static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
 {
     bool button_down = false;
@@ -126,7 +123,7 @@ int main(int argc, char **argv)
     window = SDL_CreateWindow(
         "Game",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT,
+        INIT_GAME_WINDOW_WIDTH, INIT_GAME_WINDOW_HEIGHT,
         SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL);
     
     if(window == NULL) {
@@ -161,7 +158,7 @@ int main(int argc, char **argv)
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Load OpenGL extensions with GLAD
-    if (!render_init((GLADloadproc)SDL_GL_GetProcAddress, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT)) {
+    if (!render_init((GLADloadproc)SDL_GL_GetProcAddress, INIT_GAME_WINDOW_WIDTH, INIT_GAME_WINDOW_HEIGHT)) {
         log_error("Failed to initialize render");
         return EXIT_FAILURE;
     }

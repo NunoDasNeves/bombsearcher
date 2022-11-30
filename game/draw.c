@@ -123,7 +123,11 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 
 void draw_cell(Geom *geom, Cell *cell)
 {
-    shader_set_texture(shader_flat, TEX_GET(CELL_UP)); // this does glUseProgram(shader_id);
+    Texture *tex = TEX_GET(CELL_UP);
+    if (cell->state == CELL_EXPLORED) {
+        tex = TEX_GET(CELL_DOWN);
+    }
+    shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
 
     //glLineWidth(1);
     /* not needed really

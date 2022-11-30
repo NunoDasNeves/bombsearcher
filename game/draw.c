@@ -5,7 +5,7 @@
 #include"game.h"
 #include"mem.h"
 
-#define CELL_WIDTH 20
+#define CELL_WIDTH 40
 
 typedef struct {
     u32 num_tris;
@@ -17,6 +17,13 @@ typedef struct {
 Color background_color = {{0,0,0,1}};
 Geom *cell_geoms;
 
+#define VERTEX_POS_ARRAY_ATTRIB 0
+#define VERTEX_TEX_ARRAY_ATTRIB 1
+typedef struct {
+    f32 pos[3];
+    f32 tex[2];
+} Vertex;
+
 Texture *cell_texture;
 
 void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
@@ -26,19 +33,24 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
     f32 width = CELL_WIDTH;
     f32 height = CELL_WIDTH;
 
-    f32 verts[] = {
-        // top left
-        pos_x, pos_y, 0,
-        0,0, // texture
-        // bottom left
-        pos_x, pos_y + height, 0,
-        0,1,
-        // top right
-        pos_x + width, pos_y, 0,
-        1,0,
-        // bottom right
-        pos_x + width, pos_y + height, 0,
-        1,1
+    Vertex verts[] = {
+        {
+            // top left
+            {pos_x, pos_y, 0},
+            {0,0}
+        }, {
+            // bottom left
+            {pos_x, pos_y + height, 0},
+            {0,1}
+        }, {
+            // top right
+            {pos_x + width, pos_y, 0},
+            {1,0}
+        }, {
+            // bottom right
+            {pos_x + width, pos_y + height, 0},
+            {1,1}
+        }
     };
     GLuint indices[] = {
         0,1,2,
@@ -54,16 +66,18 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts),
                  verts, GL_STATIC_DRAW);
     dump_errors();
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, // number of floats in a vert
+    glEnableVertexAttribArray(VERTEX_POS_ARRAY_ATTRIB);
+    glEnableVertexAttribArray(VERTEX_TEX_ARRAY_ATTRIB);
+    glVertexAttribPointer(VERTEX_POS_ARRAY_ATTRIB,
+                          3, // number of floats in a vert
                           GL_FLOAT, GL_FALSE, // don't normalize
-                          (3 + 2) * sizeof(f32), // stride
+                          sizeof(Vertex), // stride
                           (void*)0);
-    glVertexAttribPointer(1, 2, // number of floats in a texture coord
+    glVertexAttribPointer(VERTEX_TEX_ARRAY_ATTRIB,
+                          2, // number of floats in a texture coord
                           GL_FLOAT, GL_FALSE, // don't normalize
-                          (3+2) * sizeof(f32), // stride
-                          (void*)(3*sizeof(f32)));
+                          sizeof(Vertex), // stride
+                          (void*)offsetof(Vertex, tex));
     dump_errors();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geom->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),

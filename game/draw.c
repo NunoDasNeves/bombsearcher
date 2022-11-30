@@ -121,7 +121,7 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
     */
 }
 
-void draw_cell(Geom *geom, Cell *cell)
+void draw_cell_back(Geom *geom, Cell *cell)
 {
     Texture *tex = TEX_GET(CELL_UP);
     if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
@@ -129,6 +129,36 @@ void draw_cell(Geom *geom, Cell *cell)
     }
     shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
 
+    glBindVertexArray(geom->vao);
+    glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
+                   GL_UNSIGNED_INT, 0); // offset
+}
+
+void draw_cell_front(Geom *geom, Cell *cell)
+{
+    Texture *tex = TEX_GET(FLAG);
+    if (cell->state != CELL_FLAGGED) {
+        if (cell->state == CELL_EXPLORED) {
+            if (cell->bombs_around > 0) {
+                // TODO number
+            } else if (cell->is_bomb) {
+                tex = TEX_GET(BOMB);
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+    }
+    shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
+
+    glBindVertexArray(geom->vao);
+    glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
+                   GL_UNSIGNED_INT, 0); // offset
+}
+
+void draw_board(Board *board)
+{
     //glLineWidth(1);
     /* not needed really
     glFrontFace(GL_CCW);
@@ -144,17 +174,11 @@ void draw_cell(Geom *geom, Cell *cell)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindVertexArray(geom->vao);
-    glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
-                   GL_UNSIGNED_INT, 0); // offset
-}
-
-void draw_board(Board *board)
-{
     for(u32 r = 0; r < board->height; ++r) {
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
-            draw_cell(&cell_geoms[r_off + c], &board->cells[r_off + c]);
+            draw_cell_back(&cell_geoms[r_off + c], &board->cells[r_off + c]);
+            draw_cell_front(&cell_geoms[r_off + c], &board->cells[r_off + c]);
         }
     }
 }

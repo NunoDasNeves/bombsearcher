@@ -7,6 +7,13 @@
 
 GameState game_state;
 
+enum {
+    MOUSE_NONE = 0,
+    MOUSE_LEFT_DOWN,
+    MOUSE_LEFT_RELEASED,
+    MOUSE_RIGHT_RELEASED
+};
+
 bool game_update_and_render(Input input)
 {
     Board *board = &game_state.board;
@@ -23,10 +30,10 @@ bool game_update_and_render(Input input)
     }
 #endif
 
-    // reset all the unexplored cells first
+    // reset clicked cell first
     for (i = 0; i < board->width * board->height; ++i) {
         Cell *cell = &board->cells[i];
-        if (cell->state != CELL_EXPLORED) {
+        if (cell->state == CELL_CLICKED) {
             cell->state = CELL_UNEXPLORED;
         }
     }
@@ -37,13 +44,48 @@ bool game_update_and_render(Input input)
         cell_under_mouse = &board->cells[mouse_cell_row * board->width + mouse_cell_col];
     }
 
+    // Get the discrete state of the mouse we care about
+    u32 mouse_state = MOUSE_NONE;
+    if (input.mouse_left_down) {
+        mouse_state = MOUSE_LEFT_DOWN;
+    } else if (last_input.mouse_left_down) {
+        mouse_state = MOUSE_LEFT_RELEASED;
+    } else if (!input.mouse_right_down && last_input.mouse_right_down) {
+        mouse_state = MOUSE_RIGHT_RELEASED;
+    }
+
     /* Mouse click/drag, and release */
-    if (cell_under_mouse && cell_under_mouse->state == CELL_UNEXPLORED) {
-        if (input.mouse_left_down) {
-            cell_under_mouse->state = CELL_CLICKED;
-        } else if (last_input.mouse_left_down) {
-            cell_under_mouse->state = CELL_EXPLORED;
-            // TODO rest of game logic
+    if (cell_under_mouse && mouse_state != MOUSE_NONE) {
+        switch (mouse_state) {
+            case MOUSE_LEFT_DOWN:
+            {
+                if (cell_under_mouse->state == CELL_UNEXPLORED) {
+                    cell_under_mouse->state = CELL_CLICKED;
+                }
+                break;
+            }
+            case MOUSE_LEFT_RELEASED:
+            {
+                if (cell_under_mouse->state == CELL_UNEXPLORED) {
+                    cell_under_mouse->state = CELL_EXPLORED;
+                    // TODO rest of game logic
+                    static int bomb_i = 0;
+                    bomb_i++;
+                    cell_under_mouse->is_bomb = (bomb_i % 2) == 1;
+                }
+                break;
+            }
+            case MOUSE_RIGHT_RELEASED:
+            {
+                if (cell_under_mouse->state == CELL_UNEXPLORED) {
+                    cell_under_mouse->state = CELL_FLAGGED;
+                } else if (cell_under_mouse->state == CELL_FLAGGED) {
+                    cell_under_mouse->state = CELL_UNEXPLORED;
+                }
+                break;
+            }
+            default:
+                break;
         }
     }
 

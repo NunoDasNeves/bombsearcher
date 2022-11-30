@@ -14,13 +14,20 @@ enum {
     MOUSE_RIGHT_RELEASED
 };
 
+static void explore(Cell *cell)
+{
+    // TODO real game logic
+    static int bomb_i = 0;
+    bomb_i++;
+    cell->is_bomb = (bomb_i % 2) == 1;
+}
+
 bool game_update_and_render(Input input)
 {
     Board *board = &game_state.board;
     Input last_input = game_state.last_input;
     i64 mouse_cell_col = ((i64)input.mouse_x - CELLS_X_OFF) / CELL_PIXEL_WIDTH;
     i64 mouse_cell_row = ((i64)input.mouse_y - CELLS_Y_OFF) / CELL_PIXEL_HEIGHT;
-    i64 i;
 
 #ifdef DEBUG
     if (!last_input.mouse_left_down && input.mouse_left_down) {
@@ -30,12 +37,9 @@ bool game_update_and_render(Input input)
     }
 #endif
 
-    // reset clicked cell first
-    for (i = 0; i < board->width * board->height; ++i) {
-        Cell *cell = &board->cells[i];
-        if (cell->state == CELL_CLICKED) {
-            cell->state = CELL_UNEXPLORED;
-        }
+    // reset clicked cell because it's actually unexplored
+    if (board->cell_last_clicked->state == CELL_CLICKED) {
+        board->cell_last_clicked->state = CELL_UNEXPLORED;
     }
 
     Cell *cell_under_mouse = NULL;
@@ -61,6 +65,7 @@ bool game_update_and_render(Input input)
             {
                 if (cell_under_mouse->state == CELL_UNEXPLORED) {
                     cell_under_mouse->state = CELL_CLICKED;
+                    board->cell_last_clicked = cell_under_mouse;
                 }
                 break;
             }
@@ -68,10 +73,7 @@ bool game_update_and_render(Input input)
             {
                 if (cell_under_mouse->state == CELL_UNEXPLORED) {
                     cell_under_mouse->state = CELL_EXPLORED;
-                    // TODO rest of game logic
-                    static int bomb_i = 0;
-                    bomb_i++;
-                    cell_under_mouse->is_bomb = (bomb_i % 2) == 1;
+                    explore(cell_under_mouse);
                 }
                 break;
             }
@@ -101,6 +103,7 @@ bool game_init()
     board->width = CELLS_NUM_X_EASY;
     board->height = CELLS_NUM_Y_EASY;
     board->cells = mem_alloc(sizeof(Cell)*9*9);
+    board->cell_last_clicked = board->cells;
     if (!board->cells) {
         log_error("Failed to allocate board");
         return false;

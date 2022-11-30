@@ -41,6 +41,7 @@ typedef struct {
     Cell *cells;
     u32 width;
     u32 height;
+    Cell *cell_last_clicked;
 } Board;
 
 enum {

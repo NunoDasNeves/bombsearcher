@@ -55,11 +55,8 @@ Texture *textures[TEX_NUM_TEXTURES] = {0};
 
 void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 {
-    static const f32 x_off = CELLS_SECTION_BORDER;
-    static const f32 y_off = TOP_SECTION_HEIGHT + CELLS_SECTION_BORDER;
-
-    f32 pos_x = x_off + (f32)col * CELL_PIXEL_WIDTH;
-    f32 pos_y = y_off + (f32)row * CELL_PIXEL_WIDTH;
+    f32 pos_x = CELLS_X_OFF + (f32)col * CELL_PIXEL_WIDTH;
+    f32 pos_y = CELLS_Y_OFF + (f32)row * CELL_PIXEL_WIDTH;
     f32 width = CELL_PIXEL_WIDTH;
     f32 height = CELL_PIXEL_WIDTH;
 

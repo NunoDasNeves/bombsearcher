@@ -7,9 +7,13 @@
 
 GameState game_state;
 
-bool game_update_and_render()
+bool game_update_and_render(Input input)
 {
+    //Input last_input = game_state.last_input;
+    log_info("(%u, %u), (%u, %u)", input.mouse_x, input.mouse_y, input.mouse_left_down ? 1 : 0, input.mouse_right_down ? 1 : 0);
+
     draw_game();
+    game_state.last_input = input;
     return true;
 }
 

@@ -52,12 +52,16 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
             }
             f32 mouse_motion_x = (f32)e->motion.xrel;
             f32 mouse_motion_y = (f32)e->motion.yrel;
+            u32 mouse_x = (u32)e->motion.x;
+            u32 mouse_y = (u32)e->motion.y;
             break;
         }
         case SDL_MOUSEBUTTONDOWN:
+        button_down = true;
         case SDL_MOUSEBUTTONUP:
         {
             if (imgui_io.WantCaptureMouse) {
+                log_error("imgui wants mouse");
                 break;
             }
             switch(e->button.button)
@@ -87,13 +91,26 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
     }
 }
 
-static void poll_mouse(ImGuiIO& imgui_io)
+static Input poll_mouse(ImGuiIO& imgui_io)
 {
-    if (imgui_io.WantCaptureMouse) {
-        return;
-    }
+    static Input input = {}; // static so we can use same input again if imgui takes control
     i32 window_pixel_x, window_pixel_y;
-    SDL_GetMouseState(&window_pixel_x, &window_pixel_y);
+    u32 state;
+
+    if (imgui_io.WantCaptureMouse) {
+        input.mouse_left_down = false;
+        input.mouse_right_down = false;
+        return input;
+    }
+
+    state = SDL_GetMouseState(&window_pixel_x, &window_pixel_y);
+
+    input.mouse_left_down = state & SDL_BUTTON_LMASK;
+    input.mouse_right_down = state & SDL_BUTTON_RMASK;
+    input.mouse_x = (u32)window_pixel_x;
+    input.mouse_y = (u32)window_pixel_y;
+
+    return input;
 }
 
 int main(int argc, char **argv)
@@ -199,9 +216,9 @@ int main(int argc, char **argv)
             imgui_used_event = ImGui_ImplSDL2_ProcessEvent(&e);
             handle_event(window, &e, imgui_io);
         }
-        poll_mouse(imgui_io);
+        Input input = poll_mouse(imgui_io);
 
-        if (!game_update_and_render()) {
+        if (!game_update_and_render(input)) {
             keep_running = false;
         }
 

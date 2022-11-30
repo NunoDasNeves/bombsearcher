@@ -1,3 +1,7 @@
+// TODO remove these, needed for srand, rand
+#include<stdlib.h>
+#include<time.h>
+
 #include"types.h"
 #include"platform.h"
 #include"log.h"
@@ -16,10 +20,7 @@ enum {
 
 static void explore(Cell *cell)
 {
-    // TODO real game logic
-    static int bomb_i = 0;
-    bomb_i++;
-    cell->is_bomb = (bomb_i % 2) == 1;
+    // TODO game logic
 }
 
 bool game_update_and_render(Input input)
@@ -98,21 +99,55 @@ bool game_update_and_render(Input input)
     return true;
 }
 
+static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
+{
+    board->width = width;
+    board->height = height;
+    board->cells = mem_alloc(sizeof(Cell)*width*height);
+    if (!board->cells) {
+        log_error("Failed to allocate board");
+        return false;
+    }
+    board->cell_last_clicked = board->cells;
+
+    /* place bombs */
+    i32 bombs_left = num_bombs;
+    i32 num_cells = board->width * board->height;
+    i64 iters = 1 << 30;
+    // TODO replace c srand() and rand()
+    srand((unsigned int)time(NULL));
+
+    while (bombs_left > 0 && iters > 0) {
+        u32 idx = (u32)(((f32)rand()/(f32)RAND_MAX) * (f32)num_cells);
+        Cell *cell = &board->cells[idx];
+        iters--;
+        if (cell->is_bomb) {
+            continue;
+        }
+        cell->is_bomb = true;
+        bombs_left--;
+    }
+
+    if (iters <= 0) {
+        log_error("Failed to place bombs - RNG is broken!");
+        return false;
+    }
+
+    return true;
+}
+
 bool game_init()
 {
     Board *board = &game_state.board;
 
-    board->width = CELLS_NUM_X_EASY;
-    board->height = CELLS_NUM_Y_EASY;
-    board->cells = mem_alloc(sizeof(Cell)*9*9);
-    board->cell_last_clicked = board->cells;
-    if (!board->cells) {
-        log_error("Failed to allocate board");
+    if (!board_init(board, CELLS_NUM_X_EASY, CELLS_NUM_Y_EASY, CELLS_NUM_BOMBS_EASY)) {
+        log_error("Failed to init board");
         return false;
     }
 
     if (!draw_init()) {
         log_error("Failed to init draw");
+        return false;
     }
 
     return true;

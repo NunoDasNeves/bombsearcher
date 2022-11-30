@@ -30,12 +30,7 @@ static struct {
     Texture *texture; // framebuffer texture
 } screen;
 
-/*
- * Basic unlit flat shader stuff
- */
-static struct {
-    GLuint shader;
-} flat;
+GLuint shader_flat;
 
 // 1x1 white texture
 static Texture *empty_texture;
@@ -46,8 +41,8 @@ static GLsizei gl_viewport_width = 0;
 static GLsizei gl_viewport_height = 0;
 static f32 viewport_aspect = 0;
 
-static void shader_set_texture(GLuint shader_id,
-                               Texture* texture)
+void shader_set_texture(GLuint shader_id,
+                        Texture* texture)
 {
     GLint loc;
 
@@ -331,9 +326,11 @@ void render_end()
     glClearColor(1, 0, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // drawing mode fill, disable alpha blend...
+    // reset stuff for screen shader
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
 
     // Set current shader program
     glUseProgram(screen.shader);
@@ -353,7 +350,7 @@ void render_start(Color color)
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(flat.shader);
+    glUseProgram(shader_flat);
 
     dump_errors();
 }
@@ -372,8 +369,8 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         return false;
     }
 
-    flat.shader = create_shader_program("shaders/flat.vert", "shaders/flat.frag");
-    if (!flat.shader) {
+    shader_flat = create_shader_program("shaders/flat.vert", "shaders/flat.frag");
+    if (!shader_flat) {
         log_error("Failed to create flat shader");
         return false;
     }
@@ -384,7 +381,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
                                   -1, 1);
     Mat4 view_matrix = mat4_ident();
     Mat4 model_matrix = mat4_ident();
-    shader_set_transform(flat.shader,
+    shader_set_transform(shader_flat,
                          &proj_matrix,
                          &view_matrix,
                          &model_matrix);
@@ -400,7 +397,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     // create 1x1 white texture for default/untextured quads
     u8 buf[4] = {255, 255, 255, 255};
     empty_texture = create_texture(buf, 1, 1);
-    shader_set_texture(flat.shader, empty_texture);
+    shader_set_texture(shader_flat, empty_texture);
 
     // texture for the screen triangle, size to the screen
     screen.texture = create_fb_texture(width, height);

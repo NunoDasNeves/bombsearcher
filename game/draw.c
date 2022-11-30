@@ -29,16 +29,16 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
     f32 verts[] = {
         // top left
         pos_x, pos_y, 0,
-        //0,0, // texture
+        0,0, // texture
         // bottom left
         pos_x, pos_y + height, 0,
-        //0,1,
+        0,1,
         // top right
         pos_x + width, pos_y, 0,
-        //1,0,
+        1,0,
         // bottom right
         pos_x + width, pos_y + height, 0,
-        //1,1
+        1,1
     };
     GLuint indices[] = {
         0,1,2,
@@ -55,14 +55,15 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
                  verts, GL_STATIC_DRAW);
     dump_errors();
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glVertexAttribPointer(0, 3, // number of floats in a vert
                           GL_FLOAT, GL_FALSE, // don't normalize
-                          3 * sizeof(f32), // stride
+                          (3 + 2) * sizeof(f32), // stride
                           (void*)0);
-    //glVertexAttribPointer(1, 4, // num verts
-    //                      GL_FLOAT, GL_FALSE, // don't normalize
-    //                      (3+2) * sizeof(f32), // stride
-    //                      (void*)(3*sizeof(f32)));
+    glVertexAttribPointer(1, 2, // number of floats in a texture coord
+                          GL_FLOAT, GL_FALSE, // don't normalize
+                          (3+2) * sizeof(f32), // stride
+                          (void*)(3*sizeof(f32)));
     dump_errors();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geom->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),
@@ -81,13 +82,23 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 
 void draw_cell(Geom *geom, Cell *cell)
 {
+    shader_set_texture(shader_flat, cell_texture); // this does glUseProgram(shader_id);
+
     //glLineWidth(1);
-    glDisable(GL_CULL_FACE);
+    /* not needed really
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    */
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // usage
-    // glUseProgram(shader_id);
+    /* NOTE we gotta draw things back to front! */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glBindVertexArray(geom->vao);
     glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
                    GL_UNSIGNED_INT, 0); // offset

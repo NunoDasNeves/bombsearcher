@@ -3,6 +3,11 @@
 #include"types.h"
 C_BEGIN
 
+/*
+ * Basic unlit flat shader stuff
+ */
+extern GLuint shader_flat;
+
 typedef union {
     struct {
         f32 r;
@@ -20,6 +25,8 @@ typedef struct {
     u32 width;
     u32 height;
 } Texture;
+
+void shader_set_texture(GLuint shader_id, Texture* texture);
 
 Texture *create_texture(void* image_data, u32 width, u32 height);
 Texture *load_texture(const char* filename);

@@ -29,6 +29,7 @@ bool game_update_and_render(Input input)
     i64 mouse_cell_col = ((i64)input.mouse_x - CELLS_X_OFF) / CELL_PIXEL_WIDTH;
     i64 mouse_cell_row = ((i64)input.mouse_y - CELLS_Y_OFF) / CELL_PIXEL_HEIGHT;
 
+/*
 #ifdef DEBUG
     if (!last_input.mouse_left_down && input.mouse_left_down) {
         log_info("(%u, %u)", input.mouse_x, input.mouse_y);
@@ -36,6 +37,7 @@ bool game_update_and_render(Input input)
         log_info("(%lld, %lld)", mouse_cell_col, mouse_cell_row);
     }
 #endif
+*/
 
     // reset clicked cell because it's actually unexplored
     if (board->cell_last_clicked->state == CELL_CLICKED) {

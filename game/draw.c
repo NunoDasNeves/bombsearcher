@@ -124,7 +124,7 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
 void draw_cell(Geom *geom, Cell *cell)
 {
     Texture *tex = TEX_GET(CELL_UP);
-    if (cell->state == CELL_EXPLORED) {
+    if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
         tex = TEX_GET(CELL_DOWN);
     }
     shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);

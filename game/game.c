@@ -23,13 +23,28 @@ bool game_update_and_render(Input input)
     }
 #endif
 
+    // reset all the unexplored cells first
     for (i = 0; i < board->width * board->height; ++i) {
         Cell *cell = &board->cells[i];
-        cell->state = CELL_UNEXPLORED;
+        if (cell->state != CELL_EXPLORED) {
+            cell->state = CELL_UNEXPLORED;
+        }
     }
+
+    Cell *cell_under_mouse = NULL;
     if (    mouse_cell_col >= 0 && mouse_cell_col < board->width &&
             mouse_cell_row >= 0 && mouse_cell_row < board->height) {
-        board->cells[mouse_cell_row * board->width + mouse_cell_col].state = CELL_EXPLORED;
+        cell_under_mouse = &board->cells[mouse_cell_row * board->width + mouse_cell_col];
+    }
+
+    /* Mouse click/drag, and release */
+    if (cell_under_mouse && cell_under_mouse->state == CELL_UNEXPLORED) {
+        if (input.mouse_left_down) {
+            cell_under_mouse->state = CELL_CLICKED;
+        } else if (last_input.mouse_left_down) {
+            cell_under_mouse->state = CELL_EXPLORED;
+            // TODO rest of game logic
+        }
     }
 
     draw_game();

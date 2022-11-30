@@ -183,7 +183,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_FALSE);
 
     SDL_Event e;
 

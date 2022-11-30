@@ -30,16 +30,6 @@ bool game_update_and_render(Input input)
     i64 mouse_cell_col = ((i64)input.mouse_x - CELLS_X_OFF) / CELL_PIXEL_WIDTH;
     i64 mouse_cell_row = ((i64)input.mouse_y - CELLS_Y_OFF) / CELL_PIXEL_HEIGHT;
 
-/*
-#ifdef DEBUG
-    if (!last_input.mouse_left_down && input.mouse_left_down) {
-        log_info("(%u, %u)", input.mouse_x, input.mouse_y);
-        log_info("(%lld, %lld)", (i64)input.mouse_x - CELLS_X_OFF, (i64)input.mouse_y - CELLS_Y_OFF);
-        log_info("(%lld, %lld)", mouse_cell_col, mouse_cell_row);
-    }
-#endif
-*/
-
     // reset clicked cell because it's actually unexplored
     if (board->cell_last_clicked->state == CELL_CLICKED) {
         board->cell_last_clicked->state = CELL_UNEXPLORED;
@@ -50,6 +40,17 @@ bool game_update_and_render(Input input)
             mouse_cell_row >= 0 && mouse_cell_row < board->height) {
         cell_under_mouse = &board->cells[mouse_cell_row * board->width + mouse_cell_col];
     }
+
+#ifdef DEBUG
+    if (!last_input.mouse_left_down && input.mouse_left_down) {
+        if (cell_under_mouse) {
+            log_info("bombs_around: %u", cell_under_mouse->bombs_around);
+        }
+        //log_info("(%u, %u)", input.mouse_x, input.mouse_y);
+        //log_info("(%lld, %lld)", (i64)input.mouse_x - CELLS_X_OFF, (i64)input.mouse_y - CELLS_Y_OFF);
+        //log_info("(%lld, %lld)", mouse_cell_col, mouse_cell_row);
+    }
+#endif
 
     // Get the discrete state of the mouse we care about
     u32 mouse_state = MOUSE_NONE;
@@ -113,6 +114,8 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     /* place bombs */
     i32 bombs_left = num_bombs;
     i32 num_cells = board->width * board->height;
+    ASSERT(bombs_left < num_cells);
+
     i64 iters = 1 << 30;
     // TODO replace c srand() and rand()
     srand((unsigned int)time(NULL));
@@ -124,8 +127,28 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
         if (cell->is_bomb) {
             continue;
         }
+        /* place bomb and numbers */
         cell->is_bomb = true;
         bombs_left--;
+        i64 bomb_c = idx % board->width;
+        i64 bomb_r = idx / board->width;
+        for (i64 r = bomb_r - 1; r <= bomb_r + 1; ++r) {
+            if (r < 0 || r >= board->height) {
+                continue;
+            }
+            for (i64 c = bomb_c - 1; c <= bomb_c + 1; ++c) {
+                if (c < 0 || c >= board->width) {
+                    continue;
+                }
+                Cell *neighbor = &board->cells[r * board->width + c];
+                if (neighbor->is_bomb) {
+                    // reset this so bombs next to each other all get 0 for bombs_around
+                    neighbor->bombs_around = 0;
+                    continue;
+                }
+                neighbor->bombs_around++;
+            }
+        }
     }
 
     if (iters <= 0) {

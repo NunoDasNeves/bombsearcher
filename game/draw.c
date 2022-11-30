@@ -139,10 +139,10 @@ void draw_cell_front(Geom *geom, Cell *cell)
     Texture *tex = TEX_GET(FLAG);
     if (cell->state != CELL_FLAGGED) {
         if (cell->state == CELL_EXPLORED) {
-            if (cell->bombs_around > 0) {
-                // TODO number
-            } else if (cell->is_bomb) {
+            if (cell->is_bomb) {
                 tex = TEX_GET(BOMB);
+            } else if (cell->bombs_around > 0) {
+                // TODO number
             } else {
                 return;
             }

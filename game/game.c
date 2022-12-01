@@ -40,18 +40,18 @@ bool game_update_and_render(Input input)
             mouse_cell_row >= 0 && mouse_cell_row < board->height) {
         cell_under_mouse = &board->cells[mouse_cell_row * board->width + mouse_cell_col];
     }
-
+/*
 #ifdef DEBUG
     if (!last_input.mouse_left_down && input.mouse_left_down) {
         if (cell_under_mouse) {
             log_info("bombs_around: %u", cell_under_mouse->bombs_around);
         }
-        //log_info("(%u, %u)", input.mouse_x, input.mouse_y);
-        //log_info("(%lld, %lld)", (i64)input.mouse_x - CELLS_X_OFF, (i64)input.mouse_y - CELLS_Y_OFF);
-        //log_info("(%lld, %lld)", mouse_cell_col, mouse_cell_row);
+        log_info("(%u, %u)", input.mouse_x, input.mouse_y);
+        log_info("(%lld, %lld)", (i64)input.mouse_x - CELLS_X_OFF, (i64)input.mouse_y - CELLS_Y_OFF);
+        log_info("(%lld, %lld)", mouse_cell_col, mouse_cell_row);
     }
 #endif
-
+*/
     // Get the discrete state of the mouse we care about
     u32 mouse_state = MOUSE_NONE;
     if (input.mouse_left_down) {

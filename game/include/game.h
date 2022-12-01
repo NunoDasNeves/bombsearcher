@@ -40,10 +40,33 @@ typedef struct {
 
 typedef struct {
     Cell *cells;
+    u32 num_cells; // == width * height
     u32 width;
     u32 height;
     Cell *cell_last_clicked;
 } Board;
+
+static void board_idx_to_pos(Board *board, u32 idx, i64 *col, i64 *row)
+{
+    ASSERT(board);
+    ASSERT(col);
+    ASSERT(row);
+    ASSERT(idx < board->num_cells);
+    ASSERT(board->width > 0);
+
+    *col = idx % board->width;
+    *row = idx / board->width;
+}
+
+static Cell *board_pos_to_cell(Board *board, i64 c, i64 r)
+{
+    ASSERT(board);
+    ASSERT(board->cells);
+    ASSERT(c >= 0 && c < board->width);
+    ASSERT(r >= 0 && r < board->height);
+
+    return &board->cells[r * board->width + c];
+}
 
 enum {
     FACE_SMILE = 0,

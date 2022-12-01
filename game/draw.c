@@ -289,7 +289,7 @@ bool draw_init()
 {
     Board *board = &game_state.board;
 
-    cell_geoms = mem_alloc(sizeof(Geom)*board->width*board->height);
+    cell_geoms = mem_alloc(sizeof(Geom)*board->num_cells);
     if (!cell_geoms) {
         return false;
     }

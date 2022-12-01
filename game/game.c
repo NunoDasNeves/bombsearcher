@@ -18,9 +18,14 @@ enum {
     MOUSE_RIGHT_RELEASED
 };
 
-static void explore(Cell *cell)
+static void explore(Board *board, Cell *cell)
 {
-    // TODO game logic
+    ASSERT(board);
+    ASSERT(cell);
+    ASSERT(cell->state == CELL_UNEXPLORED);
+
+    cell->state = CELL_EXPLORED;
+
 }
 
 bool game_update_and_render(Input input)
@@ -38,7 +43,7 @@ bool game_update_and_render(Input input)
     Cell *cell_under_mouse = NULL;
     if (    mouse_cell_col >= 0 && mouse_cell_col < board->width &&
             mouse_cell_row >= 0 && mouse_cell_row < board->height) {
-        cell_under_mouse = &board->cells[mouse_cell_row * board->width + mouse_cell_col];
+        cell_under_mouse = board_pos_to_cell(board, mouse_cell_col, mouse_cell_row);
     }
 /*
 #ifdef DEBUG
@@ -76,8 +81,7 @@ bool game_update_and_render(Input input)
             case MOUSE_LEFT_RELEASED:
             {
                 if (cell_under_mouse->state == CELL_UNEXPLORED) {
-                    cell_under_mouse->state = CELL_EXPLORED;
-                    explore(cell_under_mouse);
+                    explore(board, cell_under_mouse);
                 }
                 break;
             }
@@ -102,9 +106,14 @@ bool game_update_and_render(Input input)
 
 static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
 {
+    ASSERT(board);
+    ASSERT((u64)width * (u64)height < UINT32_MAX);;
+
+    u32 num_cells = width * height;
     board->width = width;
     board->height = height;
-    board->cells = mem_alloc(sizeof(Cell)*width*height);
+    board->num_cells = num_cells;
+    board->cells = mem_alloc(sizeof(Cell) * num_cells);
     if (!board->cells) {
         log_error("Failed to allocate board");
         return false;
@@ -113,8 +122,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
 
     /* place bombs */
     i32 bombs_left = num_bombs;
-    i32 num_cells = board->width * board->height;
-    ASSERT(bombs_left < num_cells);
+    ASSERT((u32)bombs_left < num_cells);
 
     i64 iters = 1 << 30;
     // TODO replace c srand() and rand()
@@ -130,8 +138,8 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
         /* place bomb and numbers */
         cell->is_bomb = true;
         bombs_left--;
-        i64 bomb_c = idx % board->width;
-        i64 bomb_r = idx / board->width;
+        i64 bomb_c, bomb_r;
+        board_idx_to_pos(board, idx, &bomb_c, &bomb_r);
         for (i64 r = bomb_r - 1; r <= bomb_r + 1; ++r) {
             if (r < 0 || r >= board->height) {
                 continue;
@@ -140,7 +148,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
                 if (c < 0 || c >= board->width) {
                     continue;
                 }
-                Cell *neighbor = &board->cells[r * board->width + c];
+                Cell *neighbor = board_pos_to_cell(board, c, r);
                 if (neighbor->is_bomb) {
                     // reset this so bombs next to each other all get 0 for bombs_around
                     neighbor->bombs_around = 0;

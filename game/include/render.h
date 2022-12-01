@@ -23,6 +23,16 @@ static Color color_rgb8(u8 r, u8 g, u8 b)
     Color c = {{r/255.0f, g/255.0f, b/255.0f, 1.0f}};
     return c;
 }
+static Color color_red()
+{
+    Color c = {{1, 0, 0, 1}};
+    return c;
+}
+static Color color_none()
+{
+    Color c = {{0, 0, 0, 0}};
+    return c;
+}
 
 #define COLOR_RGB8(r,g,b) \
     {.data = {(r)/255.0f, (g)/255.0f, (b)/255.0f, 1.0f}}
@@ -37,6 +47,7 @@ typedef struct {
 extern Texture *empty_texture;
 
 void shader_set_texture(GLuint shader_id, Texture* texture);
+void shader_set_color(GLuint shader_id, Color color);
 
 Texture *create_texture(void* image_data, u32 width, u32 height);
 Texture *load_texture(const char* filename);

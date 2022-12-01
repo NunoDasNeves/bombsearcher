@@ -211,22 +211,41 @@ static void init_cell_geom(Geom *geom, u32 col, u32 row)
     */
 }
 
-void draw_cell_back(Geom *geom, u32 col, u32 row, Cell *cell)
+void draw_cell_back(Board *board, Geom *geom, Cell *cell)
 {
+    ASSERT(board);
+    ASSERT(geom);
+    ASSERT(cell);
+
+    i64 col, row;
+    board_cell_to_pos(board, cell, &col, &row);
+
     Texture *tex = TEX_GET(CELL_UP);
     if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
         tex = TEX_GET(CELL_DOWN);
     }
     update_cell_geom(geom, col, row, &spr_default);
     shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
+    if (board->bomb_clicked == cell) {
+        shader_set_color(shader_flat, color_red());
+    } else {
+        shader_set_color(shader_flat, color_none());
+    }
 
     glBindVertexArray(geom->vao);
     glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
                    GL_UNSIGNED_INT, 0); // offset
 }
 
-void draw_cell_front(Geom *geom, u32 col, u32 row, Cell *cell)
+void draw_cell_front(Board *board, Geom *geom, Cell *cell)
 {
+    ASSERT(board);
+    ASSERT(geom);
+    ASSERT(cell);
+
+    i64 col, row;
+    board_cell_to_pos(board, cell, &col, &row);
+
     Texture *tex = TEX_GET(FLAG);
     if (cell->state != CELL_FLAGGED) {
         if (cell->state == CELL_EXPLORED) {
@@ -245,6 +264,7 @@ void draw_cell_front(Geom *geom, u32 col, u32 row, Cell *cell)
         }
     }
     shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
+    shader_set_color(shader_flat, color_none());
 
     glBindVertexArray(geom->vao);
     glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
@@ -268,12 +288,11 @@ void draw_board(Board *board)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    for(u32 r = 0; r < board->height; ++r) {
-        u32 r_off = r * board->width;
-        for(u32 c = 0; c < board->width; ++c) {
-            draw_cell_back(&cell_geoms[r_off + c], c, r, &board->cells[r_off + c]);
-            draw_cell_front(&cell_geoms[r_off + c], c, r, &board->cells[r_off + c]);
-        }
+    for(u32 i = 0; i < board->num_cells; ++i) {
+        Geom *geom = &cell_geoms[i];
+        Cell *cell = &board->cells[i];
+        draw_cell_back(board, geom, cell);
+        draw_cell_front(board, geom, cell);
     }
 }
 

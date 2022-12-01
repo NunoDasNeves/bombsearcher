@@ -29,8 +29,16 @@ static void explore(Board *board, Cell *cell)
     cell->state = CELL_EXPLORED;
 
     if (cell->is_bomb) {
+        // lose the game
         board->bomb_clicked = cell;
         game_state.playing = false;
+        for (u32 i = 0; i < board->num_cells; ++i) {
+            Cell *cell = &board->cells[i];
+            // idk why but bombs under flags don't show
+            if (cell->is_bomb && cell->state != CELL_FLAGGED) {
+                cell->state = CELL_EXPLORED;
+            }
+        }
         return;
     } else if (cell->bombs_around > 0) {
         // early exit instead of searching

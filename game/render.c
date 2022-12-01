@@ -41,6 +41,17 @@ static GLsizei gl_viewport_width = 0;
 static GLsizei gl_viewport_height = 0;
 static f32 viewport_aspect = 0;
 
+void shader_set_color(GLuint shader_id, Color color)
+{
+    GLint loc;
+
+    glUseProgram(shader_id);
+    loc = glGetUniformLocation(shader_id, "color_blend");
+    glUniform4fv(loc, 1, color.data);
+
+    dump_errors();
+}
+
 void shader_set_texture(GLuint shader_id,
                         Texture* texture)
 {

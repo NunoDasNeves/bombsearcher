@@ -3,6 +3,7 @@
 #include<time.h>
 #include<string.h> // memset
 
+#include<SDL.h>
 #include"types.h"
 #include"platform.h"
 #include"log.h"
@@ -28,7 +29,8 @@ static void explore(Board *board, Cell *cell)
     cell->state = CELL_EXPLORED;
 
     if (cell->is_bomb) {
-        // TODO lose game
+        board->bomb_clicked = cell;
+        game_state.playing = false;
         return;
     } else if (cell->bombs_around > 0) {
         // early exit instead of searching
@@ -88,35 +90,18 @@ static void explore(Board *board, Cell *cell)
     }
 }
 
-bool game_update_and_render(Input input)
+void handle_input(Board *board, Input input)
 {
-    Board *board = &game_state.board;
+    Cell *cell_under_mouse = NULL;
     Input last_input = game_state.last_input;
     i64 mouse_cell_col = ((i64)input.mouse_x - CELLS_X_OFF) / CELL_PIXEL_WIDTH;
     i64 mouse_cell_row = ((i64)input.mouse_y - CELLS_Y_OFF) / CELL_PIXEL_HEIGHT;
 
-    // reset clicked cell because it's actually unexplored
-    if (board->cell_last_clicked->state == CELL_CLICKED) {
-        board->cell_last_clicked->state = CELL_UNEXPLORED;
-    }
-
-    Cell *cell_under_mouse = NULL;
     if (    mouse_cell_col >= 0 && mouse_cell_col < board->width &&
             mouse_cell_row >= 0 && mouse_cell_row < board->height) {
         cell_under_mouse = board_pos_to_cell(board, mouse_cell_col, mouse_cell_row);
     }
-/*
-#ifdef DEBUG
-    if (!last_input.mouse_left_down && input.mouse_left_down) {
-        if (cell_under_mouse) {
-            log_info("bombs_around: %u", cell_under_mouse->bombs_around);
-        }
-        log_info("(%u, %u)", input.mouse_x, input.mouse_y);
-        log_info("(%lld, %lld)", (i64)input.mouse_x - CELLS_X_OFF, (i64)input.mouse_y - CELLS_Y_OFF);
-        log_info("(%lld, %lld)", mouse_cell_col, mouse_cell_row);
-    }
-#endif
-*/
+
     // Get the discrete state of the mouse we care about
     u32 mouse_state = MOUSE_NONE;
     if (input.mouse_left_down) {
@@ -149,14 +134,33 @@ bool game_update_and_render(Input input)
             {
                 if (cell_under_mouse->state == CELL_UNEXPLORED) {
                     cell_under_mouse->state = CELL_FLAGGED;
+                    ASSERT(board->bombs_left > INT64_MIN);
+                    board->bombs_left--;
                 } else if (cell_under_mouse->state == CELL_FLAGGED) {
                     cell_under_mouse->state = CELL_UNEXPLORED;
+                    ASSERT(board->bombs_left < INT64_MAX);
+                    board->bombs_left++;
                 }
                 break;
             }
             default:
                 break;
         }
+    }
+
+}
+
+bool game_update_and_render(Input input)
+{
+    Board *board = &game_state.board;
+
+    // reset clicked cell because it's actually unexplored
+    if (board->cell_last_clicked->state == CELL_CLICKED) {
+        board->cell_last_clicked->state = CELL_UNEXPLORED;
+    }
+
+    if (game_state.playing) {
+        handle_input(board, input);
     }
 
     draw_game();
@@ -172,6 +176,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     u32 num_cells = width * height;
     board->width = width;
     board->height = height;
+    board->bombs_left = (i64)num_bombs;
     board->num_cells = num_cells;
     board->cells = mem_alloc(sizeof(Cell) * num_cells);
     if (!board->cells) {
@@ -179,6 +184,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
         return false;
     }
     board->cell_last_clicked = board->cells;
+    board->bomb_clicked = NULL;
 
     /* place bombs */
     i32 bombs_left = num_bombs;
@@ -227,12 +233,25 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     return true;
 }
 
-bool game_init()
+bool game_start()
 {
     Board *board = &game_state.board;
 
     if (!board_init(board, CELLS_NUM_X_EASY, CELLS_NUM_Y_EASY, CELLS_NUM_BOMBS_EASY)) {
         log_error("Failed to init board");
+        return false;
+    }
+    game_state.time_started = SDL_GetTicks64();
+    game_state.face_state = FACE_SMILE;
+    game_state.playing = true;
+
+    return true;
+}
+
+bool game_init()
+{
+    if (!game_start()) {
+        log_error("Failed to start game");
         return false;
     }
 

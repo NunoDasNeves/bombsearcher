@@ -40,10 +40,12 @@ typedef struct {
 
 typedef struct {
     Cell *cells;
+    i64 bombs_left;
+    Cell *cell_last_clicked;
+    Cell *bomb_clicked;
     u32 num_cells; // == width * height
     u32 width;
     u32 height;
-    Cell *cell_last_clicked;
 } Board;
 
 static void board_idx_to_pos(Board *board, u32 idx, i64 *col, i64 *row)
@@ -96,11 +98,10 @@ typedef struct {
 
 typedef struct {
     Board board;
-    u32 bombs_left;
-    u32 time;
-    u8 face_state;
-    bool busy_animating;
     Input last_input;
+    u64 time_started;
+    u8 face_state;
+    bool playing;
 } GameState;
 
 extern GameState game_state;

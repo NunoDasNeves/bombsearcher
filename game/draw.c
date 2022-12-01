@@ -103,6 +103,9 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols,
         return false;
     }
 
+    // half pixel offset
+    f32 x_off = 0.5F/(f32)tex->width;
+    f32 y_off = 0.5F/(f32)tex->height;
     f32 t_width = (f32)spr_width / (f32)tex->width;
     f32 t_height = (f32)spr_height / (f32)tex->height;
     u32 i = 0;
@@ -110,8 +113,8 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols,
         for (u32 c = 0; c < cols; ++c) {
             Sprite *spr = &sheet->sprites[i++];
             spr->tex = tex;
-            spr->t_x = (f32)(c * spr_width) / (f32)tex->width;
-            spr->t_y = (f32)(r * spr_height) / (f32)tex->height;
+            spr->t_x = x_off + (f32)(c * spr_width) / (f32)tex->width;
+            spr->t_y = y_off + (f32)(r * spr_height) / (f32)tex->height;
             spr->t_width = t_width;
             spr->t_height = t_height;
         }

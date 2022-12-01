@@ -53,8 +53,10 @@ enum {
 
 Texture *textures[TEX_NUM_TEXTURES] = {0};
 
-void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
+static void update_cell_geom(Geom *geom, u32 col, u32 row)
 {
+    ASSERT(geom);
+
     f32 pos_x = CELLS_X_OFF + (f32)col * CELL_PIXEL_WIDTH;
     f32 pos_y = CELLS_Y_OFF + (f32)row * CELL_PIXEL_WIDTH;
     f32 width = CELL_PIXEL_WIDTH;
@@ -79,22 +81,36 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
             {1,1}
         }
     };
-    GLuint indices[] = {
-        0,1,2,
-        3,2,1
-    };
-
-    // init
-    glGenVertexArrays(1, &geom->vao);
-    glGenBuffers(1, &geom->vbo);
-    glGenBuffers(1, &geom->ebo);
     glBindVertexArray(geom->vao);
     glBindBuffer(GL_ARRAY_BUFFER, geom->vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts),
                  verts, GL_STATIC_DRAW);
     dump_errors();
+}
+
+static void init_cell_geom(Geom *geom, u32 col, u32 row)
+{
+    ASSERT(geom);
+
+    GLuint indices[] = {
+        0,1,2,
+        3,2,1
+    };
+    /* create objects */
+    glGenVertexArrays(1, &geom->vao);
+    glGenBuffers(1, &geom->vbo);
+    glGenBuffers(1, &geom->ebo);
+
+    glBindVertexArray(geom->vao);
+    /* Enable the attributes for the current vao */
     glEnableVertexAttribArray(VERTEX_POS_ARRAY_ATTRIB);
     glEnableVertexAttribArray(VERTEX_TEX_ARRAY_ATTRIB);
+    /* Binding the vbo lets us set the attribs for it */
+    glBindBuffer(GL_ARRAY_BUFFER, geom->vbo);
+    /*
+     * The attribs are set for the current vbo, and also
+     * store the currently bound vbo in the vao
+     */
     glVertexAttribPointer(VERTEX_POS_ARRAY_ATTRIB,
                           3, // number of floats in a vert
                           GL_FLOAT, GL_FALSE, // don't normalize
@@ -106,11 +122,15 @@ void init_cell_geom(Geom *geom, u32 col, u32 row, Cell *cell)
                           sizeof(Vertex), // stride
                           (void*)offsetof(Vertex, tex));
     dump_errors();
+
+    /* buffer indices */
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geom->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),
                  indices, GL_STATIC_DRAW);
-
     dump_errors();
+
+    /* buffer verts */
+    update_cell_geom(geom, col, row);
 
     /*
     glDeleteBuffers(1, &geom->vbo);
@@ -202,8 +222,7 @@ bool draw_init()
     for(u32 r = 0; r < board->height; ++r) {
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
-            init_cell_geom(&cell_geoms[r_off + c],
-                           c, r, &board->cells[r_off + c]);
+            init_cell_geom(&cell_geoms[r_off + c], c, r);
         }
     }
 

@@ -53,7 +53,74 @@ enum {
 
 Texture *textures[TEX_NUM_TEXTURES] = {0};
 
-static void update_cell_geom(Geom *geom, u32 col, u32 row)
+typedef struct {
+    Texture *tex;
+    /* These are floats because they're texture coords */
+    f32 t_x;
+    f32 t_y;
+    f32 t_width;
+    f32 t_height;
+} Sprite;
+
+static Sprite spr_default = {NULL, 0, 0, 1, 1};
+
+typedef struct {
+    Texture *tex;
+    Sprite *sprites;
+    u32 num_sprites;
+    u32 cols;
+    u32 rows;
+} SpriteSheet;
+
+static SpriteSheet numbers_sheet;
+
+static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
+{
+    ASSERT(sheet);
+    ASSERT(tex);
+
+    // TODO not sure if we need these, but whatevs
+    i64 tex_x_excess = tex->width - cols * spr_width;
+    i64 tex_y_excess = tex->height - rows * spr_height;
+
+    if (tex_x_excess < 0) {
+        log_error("Texture width %u insufficient for %u sprites of width %u", tex->width, cols, spr_width);
+        return false;
+    }
+    if (tex_y_excess < 0) {
+        log_error("Texture height %u insufficient for %u sprites of height %u", tex->height, rows, spr_height);
+        return false;
+    }
+
+    sheet->tex = tex;
+    sheet->sprites = NULL;
+    sheet->num_sprites = cols * rows;
+    sheet->cols = cols;
+    sheet->rows = rows;
+    sheet->sprites = mem_alloc(sheet->num_sprites * sizeof(Sprite));
+    if (sheet->sprites == NULL) {
+        log_error("Failed to alloc sprites");
+        return false;
+    }
+
+    f32 t_width = (f32)spr_width / (f32)tex->width;
+    f32 t_height = (f32)spr_height / (f32)tex->height;
+    u32 i = 0;
+    for (u32 r = 0; r < rows; ++r) {
+        for (u32 c = 0; c < cols; ++c) {
+            Sprite *spr = &sheet->sprites[i++];
+            spr->tex = tex;
+            spr->t_x = (f32)(c * spr_width) / (f32)tex->width;
+            spr->t_y = (f32)(r * spr_height) / (f32)tex->height;
+            spr->t_width = t_width;
+            spr->t_height = t_height;
+        }
+    }
+
+    return true;
+}
+
+static void update_cell_geom(Geom *geom, u32 col, u32 row, Sprite *spr)
 {
     ASSERT(geom);
 
@@ -66,19 +133,19 @@ static void update_cell_geom(Geom *geom, u32 col, u32 row)
         {
             // top left
             {pos_x, pos_y, 0},
-            {0,0}
+            {spr->t_x, spr->t_y}
         }, {
             // bottom left
             {pos_x, pos_y + height, 0},
-            {0,1}
+            {spr->t_x, spr->t_y + spr->t_height}
         }, {
             // top right
             {pos_x + width, pos_y, 0},
-            {1,0}
+            {spr->t_x + spr->t_width, spr->t_y}
         }, {
             // bottom right
             {pos_x + width, pos_y + height, 0},
-            {1,1}
+            {spr->t_x + spr->t_width, spr->t_y + spr->t_height}
         }
     };
     glBindVertexArray(geom->vao);
@@ -130,7 +197,7 @@ static void init_cell_geom(Geom *geom, u32 col, u32 row)
     dump_errors();
 
     /* buffer verts */
-    update_cell_geom(geom, col, row);
+    update_cell_geom(geom, col, row, &spr_default);
 
     /*
     glDeleteBuffers(1, &geom->vbo);
@@ -154,7 +221,7 @@ void draw_cell_back(Geom *geom, Cell *cell)
                    GL_UNSIGNED_INT, 0); // offset
 }
 
-void draw_cell_front(Geom *geom, Cell *cell)
+void draw_cell_front(Geom *geom, u32 col, u32 row, Cell *cell)
 {
     Texture *tex = TEX_GET(FLAG);
     if (cell->state != CELL_FLAGGED) {
@@ -162,7 +229,10 @@ void draw_cell_front(Geom *geom, Cell *cell)
             if (cell->is_bomb) {
                 tex = TEX_GET(BOMB);
             } else if (cell->bombs_around > 0) {
-                // TODO number
+                tex = TEX_GET(NUMBERS);
+                ASSERT(cell->bombs_around <= 8);
+                Sprite *spr = &numbers_sheet.sprites[cell->bombs_around - 1];
+                update_cell_geom(geom, col, row, spr);
             } else {
                 return;
             }
@@ -198,7 +268,7 @@ void draw_board(Board *board)
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
             draw_cell_back(&cell_geoms[r_off + c], &board->cells[r_off + c]);
-            draw_cell_front(&cell_geoms[r_off + c], &board->cells[r_off + c]);
+            draw_cell_front(&cell_geoms[r_off + c], c, r, &board->cells[r_off + c]);
         }
     }
 }
@@ -227,6 +297,12 @@ bool draw_init()
     }
 
     TEXTURES(TEX_LOAD);
+
+    if (!init_spritesheet_uniform(&numbers_sheet, TEX_GET(NUMBERS),
+                                  8, 1, 64, 64)) {
+        log_error("Could not init numbers sprite sheet");
+        return false;
+    }
 
     //render_resize(CELLS_SECTION_BORDER * 2 + board->width * CELL_PIXEL_WIDTH,
     //              CELLS_SECTION_BORDER * 2 + board->height * CELL_PIXEL_WIDTH + TOP_SECTION_HEIGHT);

@@ -113,8 +113,8 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols,
         for (u32 c = 0; c < cols; ++c) {
             Sprite *spr = &sheet->sprites[i++];
             spr->tex = tex;
-            spr->t_x = x_off + (f32)(c * spr_width) / (f32)tex->width;
-            spr->t_y = y_off + (f32)(r * spr_height) / (f32)tex->height;
+            spr->t_x = x_off + (f32)c * t_width;
+            spr->t_y = y_off + (f32)r * t_height;
             spr->t_width = t_width;
             spr->t_height = t_height;
         }
@@ -211,12 +211,13 @@ static void init_cell_geom(Geom *geom, u32 col, u32 row)
     */
 }
 
-void draw_cell_back(Geom *geom, Cell *cell)
+void draw_cell_back(Geom *geom, u32 col, u32 row, Cell *cell)
 {
     Texture *tex = TEX_GET(CELL_UP);
     if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
         tex = TEX_GET(CELL_DOWN);
     }
+    update_cell_geom(geom, col, row, &spr_default);
     shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
 
     glBindVertexArray(geom->vao);
@@ -270,7 +271,7 @@ void draw_board(Board *board)
     for(u32 r = 0; r < board->height; ++r) {
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
-            draw_cell_back(&cell_geoms[r_off + c], &board->cells[r_off + c]);
+            draw_cell_back(&cell_geoms[r_off + c], c, r, &board->cells[r_off + c]);
             draw_cell_front(&cell_geoms[r_off + c], c, r, &board->cells[r_off + c]);
         }
     }

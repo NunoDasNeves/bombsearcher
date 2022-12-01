@@ -68,6 +68,17 @@ static Cell *board_pos_to_cell(Board *board, i64 c, i64 r)
     return &board->cells[r * board->width + c];
 }
 
+static void board_cell_to_pos(Board *board, Cell *cell, i64 *c, i64 *r)
+{
+    ASSERT(board);
+    ASSERT(board->cells);
+    ASSERT(cell >= board->cells);
+    ASSERT(cell < &board->cells[board->num_cells]);
+
+    u32 idx = (u32)(cell - board->cells);
+    return board_idx_to_pos(board, idx, c, r);
+}
+
 enum {
     FACE_SMILE = 0,
     FACE_SCARED,

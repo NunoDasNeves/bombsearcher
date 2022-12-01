@@ -1,6 +1,7 @@
 // TODO remove these, needed for srand, rand
 #include<stdlib.h>
 #include<time.h>
+#include<string.h> // memset
 
 #include"types.h"
 #include"platform.h"
@@ -26,6 +27,65 @@ static void explore(Board *board, Cell *cell)
 
     cell->state = CELL_EXPLORED;
 
+    if (cell->is_bomb) {
+        // TODO lose game
+        return;
+    } else if (cell->bombs_around > 0) {
+        // early exit instead of searching
+        return;
+    }
+
+    // err just ad hoc it
+    u32 q_head = 0;
+    u32 q_tail = 0;
+    u32 q_len = 0;
+    u32 q_size = board->num_cells;
+    Cell **frontier = mem_alloc(sizeof(Cell *) * board->num_cells);
+    if (frontier == NULL) {
+        log_error("Failed to alloc frontier");
+        return;
+    }
+    memset(frontier, 0, sizeof(Cell *) * board->num_cells);
+
+    frontier[0] = cell;
+    q_tail++;
+    q_len++;
+    while(q_len) {
+        // pop queue
+        Cell *curr = frontier[q_head];
+        q_head = (q_head + 1) % q_size;
+        q_len--;
+        if (curr->bombs_around > 0) {
+            continue;
+        }
+        i64 curr_r,curr_c;
+        board_cell_to_pos(board, curr, &curr_c, &curr_r);
+        for (i64 r = curr_r - 1; r <= curr_r + 1; ++r) {
+            if (r < 0 || r >= board->height) {
+                continue;
+            }
+            for (i64 c = curr_c - 1; c <= curr_c + 1; ++c) {
+                if (c < 0 || c >= board->width) {
+                    continue;
+                }
+                if (c == curr_c && r == curr_r) {
+                    continue;
+                }
+                Cell *neighbor = board_pos_to_cell(board, c, r);
+                ASSERT(!neighbor->is_bomb);
+                // if cell is flagged, don't explore it
+                if (neighbor->state == CELL_UNEXPLORED) {
+                    neighbor->state = CELL_EXPLORED;
+                    //log_error("add %u %u", c, r);
+                    // TODO expand queue... should be big enough though
+                    ASSERT(q_len < q_size - 1);
+                    frontier[q_tail] = neighbor;
+                    q_tail = (q_tail + 1) % q_size;
+                    q_len++;
+                }
+            }
+        }
+    }
 }
 
 bool game_update_and_render(Input input)

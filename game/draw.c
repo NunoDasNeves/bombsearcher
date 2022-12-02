@@ -125,49 +125,26 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols,
     return true;
 }
 
-static void update_cell_geom(Geom *geom, u32 col, u32 row, Sprite *spr)
+static void geom_load(Geom *geom, Vertex *verts, u32 size_of_verts, GLuint *indices, u32 size_of_indices, u32 num_tris)
 {
     ASSERT(geom);
+    ASSERT(geom->vao);
+    ASSERT(geom->vbo);
+    ASSERT(geom->ebo);
+    geom->num_tris = num_tris;
 
-    f32 pos_x = CELLS_X_OFF + (f32)col * CELL_PIXEL_WIDTH;
-    f32 pos_y = CELLS_Y_OFF + (f32)row * CELL_PIXEL_WIDTH;
-    f32 width = CELL_PIXEL_WIDTH;
-    f32 height = CELL_PIXEL_WIDTH;
-
-    Vertex verts[] = {
-        {
-            // top left
-            {pos_x, pos_y, 0},
-            {spr->t_x, spr->t_y}
-        }, {
-            // bottom left
-            {pos_x, pos_y + height, 0},
-            {spr->t_x, spr->t_y + spr->t_height}
-        }, {
-            // top right
-            {pos_x + width, pos_y, 0},
-            {spr->t_x + spr->t_width, spr->t_y}
-        }, {
-            // bottom right
-            {pos_x + width, pos_y + height, 0},
-            {spr->t_x + spr->t_width, spr->t_y + spr->t_height}
-        }
-    };
     glBindVertexArray(geom->vao);
     glBindBuffer(GL_ARRAY_BUFFER, geom->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts),
-                 verts, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size_of_verts, verts, GL_STATIC_DRAW);
+    dump_errors();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geom->ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_of_indices, indices, GL_STATIC_DRAW);
     dump_errors();
 }
 
-static void init_cell_geom(Geom *geom, u32 col, u32 row)
+static void geom_init(Geom *geom)
 {
     ASSERT(geom);
-
-    GLuint indices[] = {
-        0,1,2,
-        3,2,1
-    };
     /* create objects */
     glGenVertexArrays(1, &geom->vao);
     glGenBuffers(1, &geom->vbo);
@@ -194,23 +171,53 @@ static void init_cell_geom(Geom *geom, u32 col, u32 row)
                           sizeof(Vertex), // stride
                           (void*)offsetof(Vertex, tex));
     dump_errors();
+}
 
-    /* buffer indices */
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geom->ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),
-                 indices, GL_STATIC_DRAW);
-    dump_errors();
-
-    /* buffer verts */
-    update_cell_geom(geom, col, row, &spr_default);
-
-    /*
+static void geom_deinit(Geom *geom)
+{
+    ASSERT(geom);
     glDeleteBuffers(1, &geom->vbo);
     glDeleteBuffers(1, &geom->ebo);
     glDeleteVertexArrays(1, &geom->vao);
 
     dump_errors();
-    */
+}
+
+static void update_cell_geom(Geom *geom, u32 col, u32 row, Sprite *spr)
+{
+    ASSERT(geom);
+
+    GLuint indices[] = {
+        0,1,2,
+        3,2,1
+    };
+
+    f32 pos_x = CELLS_X_OFF + (f32)col * CELL_PIXEL_WIDTH;
+    f32 pos_y = CELLS_Y_OFF + (f32)row * CELL_PIXEL_WIDTH;
+    f32 width = CELL_PIXEL_WIDTH;
+    f32 height = CELL_PIXEL_WIDTH;
+
+    Vertex verts[] = {
+        {
+            // top left
+            {pos_x, pos_y, 0},
+            {spr->t_x, spr->t_y}
+        }, {
+            // bottom left
+            {pos_x, pos_y + height, 0},
+            {spr->t_x, spr->t_y + spr->t_height}
+        }, {
+            // top right
+            {pos_x + width, pos_y, 0},
+            {spr->t_x + spr->t_width, spr->t_y}
+        }, {
+            // bottom right
+            {pos_x + width, pos_y + height, 0},
+            {spr->t_x + spr->t_width, spr->t_y + spr->t_height}
+        }
+    };
+
+    geom_load(geom, verts, sizeof(verts), indices, sizeof(indices), 2);
 }
 
 void draw_cell_back(Board *board, Geom *geom, Cell *cell)
@@ -317,7 +324,7 @@ bool draw_init()
     for(u32 r = 0; r < board->height; ++r) {
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
-            init_cell_geom(&cell_geoms[r_off + c], c, r);
+            geom_init(&cell_geoms[r_off + c]);
         }
     }
 

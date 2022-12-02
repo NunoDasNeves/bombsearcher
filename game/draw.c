@@ -224,7 +224,7 @@ void draw_cell_back(Board *board, Geom *geom, Cell *cell)
     if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
         tex = TEX_GET(CELL_DOWN);
     }
-    update_cell_geom(geom, col, row, &spr_default);
+    update_cell_geom(geom, (u32)col, (u32)row, &spr_default);
     shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
     if (board->bomb_clicked == cell) {
         shader_set_color(shader_flat, color_red());
@@ -255,7 +255,7 @@ void draw_cell_front(Board *board, Geom *geom, Cell *cell)
                 tex = TEX_GET(NUMBERS);
                 ASSERT(cell->bombs_around <= 8);
                 Sprite *spr = &numbers_sheet.sprites[cell->bombs_around - 1];
-                update_cell_geom(geom, col, row, spr);
+                update_cell_geom(geom, (u32)col, (u32)row, spr);
             } else {
                 return;
             }

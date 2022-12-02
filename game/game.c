@@ -33,10 +33,10 @@ static void explore(Board *board, Cell *cell)
         board->bomb_clicked = cell;
         game_state.playing = false;
         for (u32 i = 0; i < board->num_cells; ++i) {
-            Cell *cell = &board->cells[i];
+            Cell *b_cell = &board->cells[i];
             // idk why but bombs under flags don't show
-            if (cell->is_bomb && cell->state != CELL_FLAGGED) {
-                cell->state = CELL_EXPLORED;
+            if (b_cell->is_bomb && b_cell->state != CELL_FLAGGED) {
+                b_cell->state = CELL_EXPLORED;
             }
         }
         return;

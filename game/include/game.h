@@ -78,7 +78,7 @@ static void board_cell_to_pos(Board *board, Cell *cell, i64 *c, i64 *r)
     ASSERT(cell < &board->cells[board->num_cells]);
 
     u32 idx = (u32)(cell - board->cells);
-    return board_idx_to_pos(board, idx, c, r);
+    board_idx_to_pos(board, idx, c, r);
 }
 
 enum {

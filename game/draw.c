@@ -220,7 +220,7 @@ static void update_cell_geom(Geom *geom, u32 col, u32 row, Sprite *spr)
     geom_load(geom, verts, sizeof(verts), indices, sizeof(indices), 2);
 }
 
-void draw_cell_back(Board *board, Geom *geom, Cell *cell)
+static void draw_cell_back(Board *board, Geom *geom, Cell *cell)
 {
     ASSERT(board);
     ASSERT(geom);
@@ -246,7 +246,7 @@ void draw_cell_back(Board *board, Geom *geom, Cell *cell)
                    GL_UNSIGNED_INT, 0); // offset
 }
 
-void draw_cell_front(Board *board, Geom *geom, Cell *cell)
+static void draw_cell_front(Board *board, Geom *geom, Cell *cell)
 {
     ASSERT(board);
     ASSERT(geom);
@@ -280,7 +280,7 @@ void draw_cell_front(Board *board, Geom *geom, Cell *cell)
                    GL_UNSIGNED_INT, 0); // offset
 }
 
-void draw_board(Board *board)
+static void draw_board(Board *board)
 {
     //glLineWidth(1);
     /* not needed really
@@ -305,11 +305,81 @@ void draw_board(Board *board)
     }
 }
 
+typedef union {
+    struct {
+        f32 x,y;
+    };
+    f32 data[2];
+} Vec2f;
+
+inline Vec2f vec2f(f32 x, f32 y)
+{
+    Vec2f v = {{x,y}};
+    return v;
+}
+
+void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
+{
+    ASSERT(geom);
+    ASSERT(spr);
+
+    // TODO
+    ASSERT(geom);
+
+    GLuint indices[] = {
+        0,1,2,
+        3,2,1
+    };
+
+    Vertex verts[] = {
+        {
+            // top left
+            {pos.x, pos.y, 0},
+            {spr->t_x, spr->t_y}
+        }, {
+            // bottom left
+            {pos.x, pos.y + dims.y, 0},
+            {spr->t_x, spr->t_y + spr->t_height}
+        }, {
+            // top right
+            {pos.x + dims.x, pos.y, 0},
+            {spr->t_x + spr->t_width, spr->t_y}
+        }, {
+            // bottom right
+            {pos.x + dims.x, pos.y + dims.y, 0},
+            {spr->t_x + spr->t_width, spr->t_y + spr->t_height}
+        }
+    };
+
+    geom_load(geom, verts, sizeof(verts), indices, sizeof(indices), 2);
+}
+
+void draw_face()
+{
+    Geom geom;
+    // TODO get width dynamically
+    Vec2f pos = vec2f(
+        INIT_GAME_WINDOW_WIDTH/2 - FACE_PIXEL_WIDTH/2,
+        TOP_SECTION_BORDER + TOP_SECTION_INTERIOR_HEIGHT/2 - FACE_PIXEL_HEIGHT/2
+    );
+    Vec2f dims = vec2f(FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT);
+    ASSERT(game_state.face_state <= FACE_COOL);
+    Sprite *spr = &face_sheet.sprites[game_state.face_state];
+
+    shader_set_texture(shader_flat, TEX_GET(FACE)); // this does glUseProgram(shader_id);
+    geom_init(&geom);
+    geom_load_sprite(&geom, pos, dims, spr);
+    glBindVertexArray(geom.vao);
+    glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
+                   GL_UNSIGNED_INT, 0); // offset
+    geom_deinit(&geom);
+}
+
 void draw_game()
 {
     render_start(background_color);
     draw_board(&game_state.board);
-    dump_errors();
+    draw_face();
     render_end();
 }
 

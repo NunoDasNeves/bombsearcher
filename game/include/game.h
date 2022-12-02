@@ -13,6 +13,8 @@ C_BEGIN
 #define TOP_SECTION_HEIGHT ( (TOP_SECTION_INTERIOR_HEIGHT) + ((TOP_SECTION_BORDER) * 2) )
 #define CELL_PIXEL_WIDTH 64
 #define CELL_PIXEL_HEIGHT CELL_PIXEL_WIDTH
+#define FACE_PIXEL_WIDTH 108
+#define FACE_PIXEL_HEIGHT FACE_PIXEL_WIDTH
 #define CELLS_SECTION_BORDER 16
 
 #define CELLS_X_OFF CELLS_SECTION_BORDER
@@ -83,9 +85,9 @@ static void board_cell_to_pos(Board *board, Cell *cell, i64 *c, i64 *r)
 
 enum {
     FACE_SMILE = 0,
+    FACE_CLICKED,
     FACE_SCARED,
     FACE_DEAD,
-    FACE_CLICKED,
     FACE_COOL
 };
 

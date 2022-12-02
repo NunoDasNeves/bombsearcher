@@ -28,7 +28,8 @@ typedef struct {
     op("cell_down", CELL_DOWN, 1) \
     op("flag", FLAG, 2) \
     op("bomb", BOMB, 3) \
-    op("numbers", NUMBERS, 4)
+    op("numbers", NUMBERS, 4) \
+    op("face", FACE, 5)
 
 #define TEX_ENUM(s, e, n) \
     TEX_##e = n,
@@ -73,6 +74,7 @@ typedef struct {
 } SpriteSheet;
 
 static SpriteSheet numbers_sheet;
+static SpriteSheet face_sheet;
 
 static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
 {
@@ -323,6 +325,11 @@ bool draw_init()
 
     if (!init_spritesheet_uniform(&numbers_sheet, TEX_GET(NUMBERS),
                                   8, 1, 64, 64)) {
+        log_error("Could not init numbers sprite sheet");
+        return false;
+    }
+    if (!init_spritesheet_uniform(&face_sheet, TEX_GET(FACE),
+                                  5, 1, 128, 128)) {
         log_error("Could not init numbers sprite sheet");
         return false;
     }

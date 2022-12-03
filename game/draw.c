@@ -4,6 +4,7 @@
 #include"render.h"
 #include"game.h"
 #include"mem.h"
+#include"vec.h"
 
 typedef struct {
     u32 num_tris;
@@ -305,26 +306,10 @@ static void draw_board(Board *board)
     }
 }
 
-typedef union {
-    struct {
-        f32 x,y;
-    };
-    f32 data[2];
-} Vec2f;
-
-static inline Vec2f vec2f(f32 x, f32 y)
-{
-    Vec2f v = {{x,y}};
-    return v;
-}
-
 void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
 {
     ASSERT(geom);
     ASSERT(spr);
-
-    // TODO
-    ASSERT(geom);
 
     GLuint indices[] = {
         0,1,2,
@@ -354,14 +339,10 @@ void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
     geom_load(geom, verts, sizeof(verts), indices, sizeof(indices), 2);
 }
 
-void draw_face()
+static void draw_face()
 {
     Geom geom;
-    // TODO get width dynamically
-    Vec2f pos = vec2f(
-        INIT_GAME_WINDOW_WIDTH/2 - FACE_PIXEL_WIDTH/2,
-        TOP_SECTION_BORDER + TOP_SECTION_INTERIOR_HEIGHT/2 - FACE_PIXEL_HEIGHT/2
-    );
+    Vec2f pos = get_face_pos();
     Vec2f dims = vec2f(FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT);
     ASSERT(game_state.face_state <= FACE_COOL);
     Sprite *spr = &face_sheet.sprites[game_state.face_state];

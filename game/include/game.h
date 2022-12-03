@@ -1,5 +1,6 @@
 #pragma once
 #include"types.h"
+#include"vec.h"
 
 C_BEGIN
 
@@ -26,6 +27,16 @@ C_BEGIN
 
 #define INIT_GAME_WINDOW_WIDTH ( ((CELLS_SECTION_BORDER) * 2) + ((CELLS_NUM_X_EASY) * (CELL_PIXEL_WIDTH)) )
 #define INIT_GAME_WINDOW_HEIGHT ( ((CELLS_SECTION_BORDER) * 2) + ((CELLS_NUM_Y_EASY) * (CELL_PIXEL_WIDTH)) + (TOP_SECTION_HEIGHT) )
+
+static inline Vec2f get_face_pos()
+{
+    // TODO get width dynamically
+    Vec2f pos = vec2f(
+        INIT_GAME_WINDOW_WIDTH/2 - FACE_PIXEL_WIDTH/2,
+        TOP_SECTION_BORDER + TOP_SECTION_INTERIOR_HEIGHT/2 - FACE_PIXEL_HEIGHT/2
+    );
+    return pos;
+}
 
 enum {
     CELL_UNEXPLORED = 0,

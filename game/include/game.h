@@ -5,35 +5,33 @@
 C_BEGIN
 
 /*
- * Two sections, top and cells, each with an interior border on all sides which
- * is added to the total height/width
- * Total width is board.width * CELL_PIXEL_WIDTH + CELLS_SECTION_BORDER * 2
+ * Two sections, 'top' with the face and cells
+ * Top each have borders. Top shares bottom border with cells top border. single border width
+ * Total width is board.width * CELL_PIXEL_WIDTH + BORDER_WIDTH * 2
  */
-#define TOP_SECTION_INTERIOR_HEIGHT 128
-#define TOP_SECTION_BORDER 16
-#define TOP_SECTION_HEIGHT ( (TOP_SECTION_INTERIOR_HEIGHT) + ((TOP_SECTION_BORDER) * 2) )
 #define CELL_PIXEL_WIDTH 64
 #define CELL_PIXEL_HEIGHT CELL_PIXEL_WIDTH
 #define FACE_PIXEL_WIDTH 108
 #define FACE_PIXEL_HEIGHT FACE_PIXEL_WIDTH
-#define CELLS_SECTION_BORDER 16
+#define BORDER_WIDTH 32
+#define TOP_INTERIOR_HEIGHT ((FACE_PIXEL_HEIGHT) + 32)
 
-#define CELLS_X_OFF CELLS_SECTION_BORDER
-#define CELLS_Y_OFF ( (TOP_SECTION_HEIGHT) + (CELLS_SECTION_BORDER) )
+#define CELLS_X_OFF BORDER_WIDTH
+#define CELLS_Y_OFF ( (TOP_INTERIOR_HEIGHT) + ((BORDER_WIDTH) * 2) )
 
 #define CELLS_NUM_X_EASY 9
 #define CELLS_NUM_Y_EASY 9
 #define CELLS_NUM_BOMBS_EASY 10
 
-#define INIT_GAME_WINDOW_WIDTH ( ((CELLS_SECTION_BORDER) * 2) + ((CELLS_NUM_X_EASY) * (CELL_PIXEL_WIDTH)) )
-#define INIT_GAME_WINDOW_HEIGHT ( ((CELLS_SECTION_BORDER) * 2) + ((CELLS_NUM_Y_EASY) * (CELL_PIXEL_WIDTH)) + (TOP_SECTION_HEIGHT) )
+#define INIT_GAME_WINDOW_WIDTH ( ((BORDER_WIDTH) * 2) + ((CELLS_NUM_X_EASY) * (CELL_PIXEL_WIDTH)) )
+#define INIT_GAME_WINDOW_HEIGHT ( ((BORDER_WIDTH) * 3) + ((CELLS_NUM_Y_EASY) * (CELL_PIXEL_WIDTH)) + (TOP_INTERIOR_HEIGHT) )
 
 static inline Vec2f get_face_pos()
 {
     // TODO get width dynamically
     Vec2f pos = vec2f(
         INIT_GAME_WINDOW_WIDTH/2 - FACE_PIXEL_WIDTH/2,
-        TOP_SECTION_BORDER + TOP_SECTION_INTERIOR_HEIGHT/2 - FACE_PIXEL_HEIGHT/2
+        BORDER_WIDTH + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1) // i.e. border + top_interior/2 - face_height/2
     );
     return pos;
 }

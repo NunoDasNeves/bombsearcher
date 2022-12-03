@@ -21,7 +21,7 @@ static u64 footprint; // allocated
 static unsigned current_context;
 
 static struct {
-    struct BumpAllocator bumps[MEM_SCRATCH_BUFFERS];
+    BumpAllocator bumps[MEM_SCRATCH_BUFFERS];
     unsigned current_scope;
     u64 allocated;
     u64 footprint;
@@ -34,7 +34,7 @@ static struct {
 } longterm;
 
 static struct {
-    struct BumpAllocator bump;
+    BumpAllocator bump;
     u64 allocated;
     u64 footprint;
 } nofree;
@@ -169,28 +169,35 @@ void mem_free_longterm(void *ptr)
     // TODO
 }
 
-void *mem_alloc_nofree(u64 size)
+static void *mem_alloc_bump(BumpAllocator *bump, u64 size,
+                            u64 *b_allocated, u64 *b_footprint)
 {
-    ASSERT(nofree.bump.base);
+    ASSERT(bump->base);
 
     u64 align = max_alignment;
     ASSERT(align >= sizeof(void*));
     ASSERT((size + align - 1) > size);
 
     size += align - 1;
-    void *ret = bump_alloc(&nofree.bump, size);
+    void *ret = bump_alloc(bump, size);
     ret = (void*)ALIGN_UP_POW_2(ret, align);
 
     if (ret != NULL) {
         allocated += size;
         footprint += size;
-        nofree.allocated += size;
-        nofree.footprint += size;
+        *b_allocated += size;
+        *b_footprint += size;
     }
 
     log_debug("total allocated: %u", allocated);
 
     return ret;
+}
+
+void *mem_alloc_nofree(u64 size)
+{
+    return mem_alloc_bump(&nofree.bump, size,
+                          &nofree.allocated, &nofree.footprint);
 }
 
 void mem_get_allocated(u64 *ret_allocated, u64 *ret_footprint)

@@ -7,13 +7,13 @@
 
 C_BEGIN
 
-struct BumpAllocator {
+typedef struct {
     void *base;
     void *next_free;
     u64 size;
-};
+} BumpAllocator;
 
-static bool bump_init_allocator(struct BumpAllocator *allocator, void *mem, u64 size)
+static bool bump_init_allocator(BumpAllocator *allocator, void *mem, u64 size)
 {
     ASSERT(allocator);
     ASSERT(mem);
@@ -25,7 +25,7 @@ static bool bump_init_allocator(struct BumpAllocator *allocator, void *mem, u64 
     return true;
 }
 
-static void *bump_alloc(struct BumpAllocator *allocator, u64 req_size)
+static void *bump_alloc(BumpAllocator *allocator, u64 req_size)
 {
     ASSERT(allocator);
     ASSERT(allocator->base);
@@ -42,7 +42,7 @@ static void *bump_alloc(struct BumpAllocator *allocator, u64 req_size)
     return ret;
 }
 
-static void bump_reset(struct BumpAllocator *allocator)
+static void bump_reset(BumpAllocator *allocator)
 {
     ASSERT(allocator);
     ASSERT(allocator->base);
@@ -51,7 +51,7 @@ static void bump_reset(struct BumpAllocator *allocator)
     allocator->next_free = allocator->base;
 }
 
-static bool _bump_try_create(struct BumpAllocator *bump,
+static bool _bump_try_create(BumpAllocator *bump,
                             size_t size, void *(*alloc_fn)(size_t),
                             char *name)
 {

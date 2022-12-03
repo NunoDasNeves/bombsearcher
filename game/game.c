@@ -30,8 +30,6 @@ void check_if_won(Board *board)
             num_explored++;
         }
     }
-    log_error("num_explored: %u", num_explored);
-    log_error("num to explore: %u", board->num_cells - board->num_bombs);
     if (num_explored == board->num_cells - board->num_bombs) {
         game_state.playing = false;
         game_state.face_state = FACE_COOL;
@@ -123,12 +121,15 @@ void handle_input(Board *board, Input input)
 {
     Cell *cell_under_mouse = NULL;
     Input last_input = game_state.last_input;
-    i64 mouse_cell_col = ((i64)input.mouse_x - CELLS_X_OFF) / CELL_PIXEL_WIDTH;
-    i64 mouse_cell_row = ((i64)input.mouse_y - CELLS_Y_OFF) / CELL_PIXEL_HEIGHT;
-
-    if (    mouse_cell_col >= 0 && mouse_cell_col < board->width &&
-            mouse_cell_row >= 0 && mouse_cell_row < board->height) {
-        cell_under_mouse = board_pos_to_cell(board, mouse_cell_col, mouse_cell_row);
+    i64 mouse_x_off = (i64)input.mouse_x - CELLS_X_OFF;
+    i64 mouse_y_off = (i64)input.mouse_y - CELLS_Y_OFF;
+    if (mouse_x_off >= 0 && mouse_y_off >= 0) {
+        i64 mouse_cell_col = mouse_x_off / CELL_PIXEL_WIDTH;
+        i64 mouse_cell_row = mouse_y_off / CELL_PIXEL_HEIGHT;
+        // already checked not negative above
+        if (mouse_cell_col < board->width && mouse_cell_row < board->height) {
+            cell_under_mouse = board_pos_to_cell(board, mouse_cell_col, mouse_cell_row);
+        }
     }
 
     // Get the discrete state of the mouse we care about

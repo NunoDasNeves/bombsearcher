@@ -49,8 +49,8 @@ u32 resize_window_to_game(u32 desired_width, u32 desired_height)
      * Should give an estimate of how much space it's ok to occupy
      * ...Hopefully
      */
-    u32 max_w = ((mode.w - left - right) * 2) / 3;
-    u32 max_h = ((mode.h - top - bot) * 2) / 3;
+    u32 max_w = ((mode.w - left - right) * 4) / 5;
+    u32 max_h = ((mode.h - top - bot) * 4) / 5;
     log_debug("Max size to occupy: %u %u", max_w, max_h);
 
     log_debug("Desired game dims %u %u", desired_width, desired_height);

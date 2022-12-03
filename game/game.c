@@ -20,6 +20,24 @@ enum {
     MOUSE_RIGHT_RELEASED
 };
 
+void check_if_won(Board *board)
+{
+    u32 num_explored = 0;
+    for (u32 i = 0; i < board->num_cells; ++i) {
+        Cell *cell = &board->cells[i];
+        if (cell->state == CELL_EXPLORED) {
+            ASSERT(!cell->is_bomb);
+            num_explored++;
+        }
+    }
+    log_error("num_explored: %u", num_explored);
+    log_error("num to explore: %u", board->num_cells - board->num_bombs);
+    if (num_explored == board->num_cells - board->num_bombs) {
+        game_state.playing = false;
+        game_state.face_state = FACE_COOL;
+    }
+}
+
 static void explore(Board *board, Cell *cell)
 {
     ASSERT(board);
@@ -30,6 +48,7 @@ static void explore(Board *board, Cell *cell)
 
     if (cell->is_bomb) {
         // lose the game
+        game_state.face_state = FACE_DEAD;
         board->bomb_clicked = cell;
         game_state.playing = false;
         for (u32 i = 0; i < board->num_cells; ++i) {
@@ -41,6 +60,7 @@ static void explore(Board *board, Cell *cell)
         }
         return;
     } else if (cell->bombs_around > 0) {
+        check_if_won(board);
         // early exit instead of searching
         return;
     }
@@ -96,6 +116,7 @@ static void explore(Board *board, Cell *cell)
             }
         }
     }
+    check_if_won(board);
 }
 
 void handle_input(Board *board, Input input)
@@ -128,6 +149,7 @@ void handle_input(Board *board, Input input)
                 if (cell_under_mouse->state == CELL_UNEXPLORED) {
                     cell_under_mouse->state = CELL_CLICKED;
                     board->cell_last_clicked = cell_under_mouse;
+                    game_state.face_state = FACE_SCARED;
                 }
                 break;
             }
@@ -168,6 +190,8 @@ bool game_update_and_render(Input input)
     }
 
     if (game_state.playing) {
+        // reset face in case no longer clicking
+        game_state.face_state = FACE_SMILE;
         handle_input(board, input);
     }
 
@@ -185,6 +209,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     board->width = width;
     board->height = height;
     board->bombs_left = (i64)num_bombs;
+    board->num_bombs = num_bombs;
     board->num_cells = num_cells;
     board->cells = mem_alloc(sizeof(Cell) * num_cells);
     if (!board->cells) {

@@ -46,6 +46,7 @@ typedef struct {
     Cell *cell_last_clicked;
     Cell *bomb_clicked;
     u32 num_cells; // == width * height
+    u32 num_bombs;
     u32 width;
     u32 height;
 } Board;

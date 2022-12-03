@@ -114,6 +114,8 @@ void *mem_alloc_nofree(u64 size);
 void *mem_alloc_longterm(u64 size);
 void mem_free_longterm(void *ptr);
 
+void mem_get_allocated(u64 *allocated, u64 *footprint);
+
 /*
  * Allocate virtual addresses for mem_budget*(1 + MEM_LONGTERM_BUCKETS + MEM_SCRATCH_BUFFERS) and set up buffers
  * mem_budget should be a multiple of MEM_LONGTERM_BUCKETS_MAX

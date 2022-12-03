@@ -3,6 +3,7 @@
 #include"types.h"
 #include"platform.h"
 #include"mem.h"
+#include"log.h"
 #include"allocator.h"
 #ifdef _WIN32
 typedef struct {
@@ -186,6 +187,8 @@ void *mem_alloc_nofree(u64 size)
         nofree.allocated += size;
         nofree.footprint += size;
     }
+
+    log_debug("total allocated: %u", allocated);
 
     return ret;
 }

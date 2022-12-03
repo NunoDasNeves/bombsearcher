@@ -364,14 +364,15 @@ void draw_game()
     render_end();
 }
 
-bool draw_init()
+bool draw_start_game(Board* board)
 {
-    Board *board = &game_state.board;
+    ASSERT(board);
 
     cell_geoms = mem_alloc(sizeof(Geom)*board->num_cells);
     if (!cell_geoms) {
         return false;
     }
+    // TODO need to clean up cell geom on game end or something
     for(u32 r = 0; r < board->height; ++r) {
         u32 r_off = r * board->width;
         for(u32 c = 0; c < board->width; ++c) {
@@ -379,6 +380,11 @@ bool draw_init()
         }
     }
 
+    return true;
+}
+
+bool draw_init()
+{
     TEXTURES(TEX_LOAD);
 
     if (!init_spritesheet_uniform(&numbers_sheet, TEX_GET(NUMBERS),
@@ -391,9 +397,6 @@ bool draw_init()
         log_error("Could not init numbers sprite sheet");
         return false;
     }
-
-    //render_resize(CELLS_SECTION_BORDER * 2 + board->width * CELL_PIXEL_WIDTH,
-    //              CELLS_SECTION_BORDER * 2 + board->height * CELL_PIXEL_WIDTH + TOP_SECTION_HEIGHT);
 
     return true;
 }

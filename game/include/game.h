@@ -125,6 +125,7 @@ extern GameState game_state;
 u32 resize_window_to_game(u32 desired_width, u32 desired_height);
 
 void draw_game();
+bool draw_start_game(Board* board);
 bool draw_init();
 
 bool game_update_and_render(Input input);

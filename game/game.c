@@ -313,6 +313,11 @@ static bool game_start()
     game_state.window_needs_resize = true;
     game_state.window_scale = 0;
 
+    if (!draw_start_game(board)) {
+        log_error("Failed to init draw state for board");
+        return false;
+    }
+
     return true;
 }
 

@@ -120,7 +120,10 @@ static void explore(Board *board, Cell *cell)
 void handle_input(Board *board, Input input)
 {
     Cell *cell_under_mouse = NULL;
+    bool face_is_under_mouse = false;
+    Vec2f face_pos = get_face_pos();
     Input last_input = game_state.last_input;
+
     i64 mouse_x_off = (i64)input.mouse_x - CELLS_X_OFF;
     i64 mouse_y_off = (i64)input.mouse_y - CELLS_Y_OFF;
     if (mouse_x_off >= 0 && mouse_y_off >= 0) {
@@ -130,6 +133,10 @@ void handle_input(Board *board, Input input)
         if (mouse_cell_col < board->width && mouse_cell_row < board->height) {
             cell_under_mouse = board_pos_to_cell(board, mouse_cell_col, mouse_cell_row);
         }
+    } else if (input.mouse_x >= face_pos.x && input.mouse_x < face_pos.x + FACE_PIXEL_WIDTH &&
+               input.mouse_y >= face_pos.y && input.mouse_y < face_pos.y + FACE_PIXEL_HEIGHT
+               ){
+        face_is_under_mouse = true;
     }
 
     // Get the discrete state of the mouse we care about
@@ -143,58 +150,70 @@ void handle_input(Board *board, Input input)
     }
 
     /* Mouse click/drag, and release */
-    if (cell_under_mouse && mouse_state != MOUSE_NONE) {
-        switch (mouse_state) {
-            case MOUSE_LEFT_DOWN:
-            {
-                if (cell_under_mouse->state == CELL_UNEXPLORED) {
+    switch (mouse_state) {
+        case MOUSE_LEFT_DOWN:
+        {
+            if (cell_under_mouse && game_state.playing) {
+                if (cell_under_mouse && cell_under_mouse->state == CELL_UNEXPLORED) {
                     cell_under_mouse->state = CELL_CLICKED;
                     board->cell_last_clicked = cell_under_mouse;
                     game_state.face_state = FACE_SCARED;
                 }
                 break;
             }
-            case MOUSE_LEFT_RELEASED:
-            {
+            if (face_is_under_mouse) {
+                game_state.face_state = FACE_CLICKED;
+            }
+            break;
+        }
+        case MOUSE_LEFT_RELEASED:
+        {
+            if (cell_under_mouse && game_state.playing) {
                 if (cell_under_mouse->state == CELL_UNEXPLORED) {
                     explore(board, cell_under_mouse);
                 }
                 break;
             }
-            case MOUSE_RIGHT_RELEASED:
-            {
-                if (cell_under_mouse->state == CELL_UNEXPLORED) {
-                    cell_under_mouse->state = CELL_FLAGGED;
-                    ASSERT(board->bombs_left > INT64_MIN);
-                    board->bombs_left--;
-                } else if (cell_under_mouse->state == CELL_FLAGGED) {
-                    cell_under_mouse->state = CELL_UNEXPLORED;
-                    ASSERT(board->bombs_left < INT64_MAX);
-                    board->bombs_left++;
-                }
-                break;
+            if (face_is_under_mouse) {
+                // TODO new game
             }
-            default:
-                break;
+            break;
         }
+        case MOUSE_RIGHT_RELEASED:
+        {
+            if (!cell_under_mouse || !game_state.playing) {
+                break;
+            } else if (cell_under_mouse->state == CELL_UNEXPLORED) {
+                cell_under_mouse->state = CELL_FLAGGED;
+                ASSERT(board->bombs_left > INT64_MIN);
+                board->bombs_left--;
+            } else if (cell_under_mouse->state == CELL_FLAGGED) {
+                cell_under_mouse->state = CELL_UNEXPLORED;
+                ASSERT(board->bombs_left < INT64_MAX);
+                board->bombs_left++;
+            }
+            break;
+        }
+        default:
+            break;
     }
-
 }
 
 bool game_update_and_render(Input input)
 {
     Board *board = &game_state.board;
 
-    // reset clicked cell because it's actually unexplored
+    // reset clicked cell to treat it as unexplored
     if (board->cell_last_clicked->state == CELL_CLICKED) {
         board->cell_last_clicked->state = CELL_UNEXPLORED;
     }
 
+    // reset face in case no longer clicking
+    // if not playing we want to leave it in win/lose state
     if (game_state.playing) {
-        // reset face in case no longer clicking
         game_state.face_state = FACE_SMILE;
-        handle_input(board, input);
     }
+    handle_input(board, input);
 
     draw_game();
     game_state.last_input = input;

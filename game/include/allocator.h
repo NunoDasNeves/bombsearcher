@@ -51,6 +51,32 @@ static void bump_reset(struct BumpAllocator *allocator)
     allocator->next_free = allocator->base;
 }
 
+static bool _bump_try_create(struct BumpAllocator *bump,
+                            size_t size, void *(*alloc_fn)(size_t),
+                            char *name)
+{
+    ASSERT(bump);
+    ASSERT(alloc_fn);
+    ASSERT(name);
+
+    void *mem = alloc_fn(size);
+
+    if (mem == NULL) {
+        log_error("Failed to alloc %s", name);
+        return false;
+    }
+    if (!bump_init_allocator(bump, mem, size)) {
+        log_error("Failed to init %s", name);
+        return false;
+    }
+    return true;
+}
+
+#define bump_try_create(bump, size, alloc_fn) \
+    _bump_try_create(&bump, size, alloc_fn, #bump)
+
+
+
 static bool bump_allocator_test()
 {
     // TODO

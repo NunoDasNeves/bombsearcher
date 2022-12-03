@@ -206,17 +206,12 @@ void mem_get_allocated(u64 *ret_allocated, u64 *ret_footprint)
 
 bool mem_init(u64 mem_budget)
 {
-    void *nofree_base = platform_alloc_page_aligned(mem_budget);
-    if (!nofree_base) {
-        log_error("Alloc nofree buffer");
-        return false;
-    }
-    if (!bump_init_allocator(&nofree.bump, nofree_base, mem_budget)) {
-        log_error("Init nofree allocator");
+
+    if (!bump_try_create(nofree.bump, mem_budget, platform_alloc_page_aligned)) {
         return false;
     }
 
-    // TODO MEM_CTX_SCRATCH, MEM_CTX_LONGTERM
+    // TODO MEM_CTX_LONGTERM
 
     current_context = MEM_CTX_NOFREE;
     allocated = 0;

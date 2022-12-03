@@ -126,6 +126,9 @@ void handle_input(Board *board, Input input)
     Vec2f face_pos = get_face_pos();
     Input last_input = game_state.last_input;
 
+    input.mouse_x <<= game_state.window_scale;
+    input.mouse_y <<= game_state.window_scale;
+
     i64 mouse_x_off = (i64)input.mouse_x - CELLS_X_OFF;
     i64 mouse_y_off = (i64)input.mouse_y - CELLS_Y_OFF;
     if (mouse_x_off >= 0 && mouse_y_off >= 0) {
@@ -204,6 +207,12 @@ void handle_input(Board *board, Input input)
 bool game_update_and_render(Input input)
 {
     Board *board = &game_state.board;
+
+    if (game_state.window_needs_resize) {
+        game_state.window_scale =
+                resize_window_to_game(game_state.pixel_w, game_state.pixel_h);
+        game_state.window_needs_resize = false;
+    }
 
     // reset clicked cell to treat it as unexplored
     if (board->cell_last_clicked->state == CELL_CLICKED) {
@@ -299,6 +308,10 @@ static bool game_start()
     game_state.time_started = SDL_GetTicks64();
     game_state.face_state = FACE_SMILE;
     game_state.playing = true;
+    game_state.pixel_w = INIT_GAME_WINDOW_WIDTH;
+    game_state.pixel_h = INIT_GAME_WINDOW_HEIGHT;
+    game_state.window_needs_resize = true;
+    game_state.window_scale = 0;
 
     return true;
 }

@@ -116,9 +116,15 @@ typedef struct {
     u64 time_started;
     u8 face_state;
     bool playing;
+    u32 pixel_w;
+    u32 pixel_h;
+    u32 window_scale; // window is scaled down by >>window_scale
+    bool window_needs_resize;
 } GameState;
 
 extern GameState game_state;
+
+u32 resize_window_to_game(u32 desired_width, u32 desired_height);
 
 void draw_game();
 bool draw_init();

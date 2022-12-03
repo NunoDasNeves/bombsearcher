@@ -20,6 +20,61 @@
 
 bool keep_running = true;
 
+/* return how much it's scaled down in power of 2 */
+u32 resize_window_to_game(u32 desired_width, u32 desired_height)
+{
+    SDL_Window *window = SDL_GL_GetCurrentWindow();
+    SDL_DisplayMode mode;
+    int top, left, bot, right;
+
+    if (SDL_GetDesktopDisplayMode(0, &mode) < 0)
+    {
+        log_error("Couldn't get desktop display mode: %s", SDL_GetError());
+        // default to something smallish
+        mode.w = 1280;
+        mode.h = 720;
+        mode.refresh_rate = 60;
+    }
+    log_debug("Desktop display mode %d x %d %dHz", mode.w, mode.h, mode.refresh_rate);
+
+    if (SDL_GetWindowBordersSize(window, &top, &left, &bot, &right) < 0)
+    {
+        log_error("Couldn't get window border size: %s", SDL_GetError());
+        top = left = bot = right = 0;
+    }
+    log_debug("Window borders: %d %d %d %d", top, left, bot, right);
+
+    /*
+     * Reduce by window borders, then multiply by 2/3
+     * Should give an estimate of how much space it's ok to occupy
+     * ...Hopefully
+     */
+    u32 max_w = ((mode.w - left - right) * 2) / 3;
+    u32 max_h = ((mode.h - top - bot) * 2) / 3;
+    log_debug("Max size to occupy: %u %u", max_w, max_h);
+
+    log_debug("Desired game dims %u %u", desired_width, desired_height);
+
+    u32 window_w = desired_width;
+    u32 window_h = desired_height;
+    u32 scale = 0;
+
+    while (window_w > max_w || window_h > max_h) {
+        window_w >>= 1;
+        window_h >>= 1;
+        scale++;
+    }
+    window_w = MAX(window_w, desired_width>>2);
+    window_h = MAX(window_h, desired_height>>2);
+
+    log_debug("Resizing window to %u %u", window_w, window_h);
+    SDL_SetWindowSize(window, (int)window_w, (int)window_h);
+
+    desired_width = window_w;
+    desired_height = window_h;
+    return scale;
+}
+
 static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
 {
     bool button_down = false;
@@ -36,6 +91,7 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
             switch(e->window.event)
             {
                 case SDL_WINDOWEVENT_RESIZED:
+                case SDL_WINDOWEVENT_SIZE_CHANGED:
                 {
                     int width, height;
                     SDL_GL_GetDrawableSize(window, &width, &height);
@@ -86,6 +142,10 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
                 break;
             }
             SDL_Keycode keycode = e->key.keysym.sym;
+            switch (keycode) {
+                case SDLK_r:
+                    break;
+            }
             break;
         }
     }

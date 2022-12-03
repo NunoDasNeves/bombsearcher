@@ -26,6 +26,9 @@ C_BEGIN
 #define STRINGIFY(X) #X
 #define TO_STRING(X) STRINGIFY(X)
 
+#define MAX(x,y) ((x) < (y) ? (y) : (x))
+#define MIN(x,y) ((x) > (y) ? (y) : (x))
+
 #define KiB(x) (1024 * (x))
 #define MiB(x) (1024 * KiB(x))
 #define GiB(x) (1024 * MiB(x))

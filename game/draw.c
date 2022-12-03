@@ -312,7 +312,7 @@ typedef union {
     f32 data[2];
 } Vec2f;
 
-inline Vec2f vec2f(f32 x, f32 y)
+static inline Vec2f vec2f(f32 x, f32 y)
 {
     Vec2f v = {{x,y}};
     return v;

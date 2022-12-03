@@ -13,6 +13,8 @@
 
 GameState game_state;
 
+static bool game_start();
+
 enum {
     MOUSE_NONE = 0,
     MOUSE_LEFT_DOWN,
@@ -175,7 +177,7 @@ void handle_input(Board *board, Input input)
                 break;
             }
             if (face_is_under_mouse) {
-                // TODO new game
+                game_start();
             }
             break;
         }
@@ -286,7 +288,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     return true;
 }
 
-bool game_start()
+static bool game_start()
 {
     Board *board = &game_state.board;
 

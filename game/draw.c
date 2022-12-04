@@ -25,12 +25,10 @@ typedef struct {
 
 /* macro magic! put all texture stuff here */
 #define TEXTURES(op) \
-    op("cell_up", CELL_UP, 0) \
-    op("cell_down", CELL_DOWN, 1) \
-    op("flag", FLAG, 2) \
-    op("bomb", BOMB, 3) \
-    op("numbers", NUMBERS, 4) \
-    op("face", FACE, 5)
+    op("cell", CELL, 0) \
+    op("numbers", NUMBERS, 1) \
+    op("face", FACE, 2) \
+    op("border", BORDER, 3)
 
 #define TEX_ENUM(s, e, n) \
     TEX_##e = n,
@@ -69,8 +67,6 @@ typedef struct {
     Vec2f dims;
 } Sprite;
 
-static Sprite spr_default = {NULL, 0, 0, 1, 1};
-
 typedef struct {
     Texture *tex;
     Sprite *sprites;
@@ -79,8 +75,10 @@ typedef struct {
     u32 rows;
 } SpriteSheet;
 
+static SpriteSheet cell_sheet;
 static SpriteSheet numbers_sheet;
 static SpriteSheet face_sheet;
+static SpriteSheet border_sheet;
 
 static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
 {
@@ -240,128 +238,6 @@ static void geom_deinit(Geom *geom)
     dump_errors();
 }
 
-static void update_cell_geom(Geom *geom, u32 col, u32 row, Sprite *spr)
-{
-    ASSERT(geom);
-
-    GLuint indices[] = {
-        0,1,2,
-        3,2,1
-    };
-
-    f32 pos_x = CELLS_X_OFF + (f32)col * CELL_PIXEL_WIDTH;
-    f32 pos_y = CELLS_Y_OFF + (f32)row * CELL_PIXEL_WIDTH;
-    f32 width = CELL_PIXEL_WIDTH;
-    f32 height = CELL_PIXEL_WIDTH;
-
-    Vertex verts[] = {
-        {
-            // top left
-            {pos_x, pos_y, 0},
-            {spr->pos_tx.x, spr->pos_tx.y}
-        }, {
-            // bottom left
-            {pos_x, pos_y + height, 0},
-            {spr->pos_tx.x, spr->pos_tx.y + spr->dims_tx.y}
-        }, {
-            // top right
-            {pos_x + width, pos_y, 0},
-            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y}
-        }, {
-            // bottom right
-            {pos_x + width, pos_y + height, 0},
-            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y + spr->dims_tx.y}
-        }
-    };
-
-    geom_load(geom, verts, sizeof(verts), indices, sizeof(indices), 2);
-}
-
-static void draw_cell_back(Board *board, Geom *geom, Cell *cell)
-{
-    ASSERT(board);
-    ASSERT(geom);
-    ASSERT(cell);
-
-    i64 col, row;
-    board_cell_to_pos(board, cell, &col, &row);
-
-    Texture *tex = TEX_GET(CELL_UP);
-    if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
-        tex = TEX_GET(CELL_DOWN);
-    }
-    update_cell_geom(geom, (u32)col, (u32)row, &spr_default);
-    shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
-    if (board->bomb_clicked == cell) {
-        shader_set_color(shader_flat, color_red());
-    } else {
-        shader_set_color(shader_flat, color_none());
-    }
-
-    glBindVertexArray(geom->vao);
-    glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
-                   GL_UNSIGNED_INT, 0); // offset
-}
-
-static void draw_cell_front(Board *board, Geom *geom, Cell *cell)
-{
-    ASSERT(board);
-    ASSERT(geom);
-    ASSERT(cell);
-
-    i64 col, row;
-    board_cell_to_pos(board, cell, &col, &row);
-
-    Texture *tex = TEX_GET(FLAG);
-    if (cell->state != CELL_FLAGGED) {
-        if (cell->state == CELL_EXPLORED) {
-            if (cell->is_bomb) {
-                tex = TEX_GET(BOMB);
-            } else if (cell->bombs_around > 0) {
-                tex = TEX_GET(NUMBERS);
-                ASSERT(cell->bombs_around <= 8);
-                Sprite *spr = &numbers_sheet.sprites[cell->bombs_around - 1];
-                update_cell_geom(geom, (u32)col, (u32)row, spr);
-            } else {
-                return;
-            }
-        } else {
-            return;
-        }
-    }
-    shader_set_texture(shader_flat, tex); // this does glUseProgram(shader_id);
-    shader_set_color(shader_flat, color_none());
-
-    glBindVertexArray(geom->vao);
-    glDrawElements(GL_TRIANGLES, 6, // num indices; num_tris * 3
-                   GL_UNSIGNED_INT, 0); // offset
-}
-
-static void draw_board(Board *board)
-{
-    //glLineWidth(1);
-    /* not needed really
-    glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    */
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    /* NOTE we gotta draw things back to front! */
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    for(u32 i = 0; i < board->num_cells; ++i) {
-        Geom *geom = &cell_geoms[i];
-        Cell *cell = &board->cells[i];
-        draw_cell_back(board, geom, cell);
-        draw_cell_front(board, geom, cell);
-    }
-}
-
 void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
 {
     ASSERT(geom);
@@ -408,6 +284,84 @@ static void draw_sprite(Sprite *sprite, Vec2f pos, Vec2f dims)
     geom_deinit(&geom);
 }
 
+static Vec2f cell_pixel_pos(Board *board, Cell *cell)
+{
+
+    i64 col, row;
+    Vec2f pos;
+
+    board_cell_to_pos(board, cell, &col, &row);
+    pos.x = CELLS_X_OFF + (f32)col * CELL_PIXEL_WIDTH;
+    pos.y = CELLS_Y_OFF + (f32)row * CELL_PIXEL_WIDTH;
+
+    return pos;
+}
+
+enum {
+    SPR_CELL_UP = 0,
+    SPR_CELL_DOWN = 1,
+    SPR_CELL_FLAG = 2,
+    SPR_CELL_BOMB = 3
+};
+
+static void draw_cell_back(Board *board, Geom *geom, Cell *cell)
+{
+    ASSERT(board);
+    ASSERT(geom);
+    ASSERT(cell);
+
+    i64 col, row;
+    board_cell_to_pos(board, cell, &col, &row);
+
+    Sprite *spr = &cell_sheet.sprites[SPR_CELL_UP];
+    if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
+        spr = &cell_sheet.sprites[SPR_CELL_DOWN];
+    }
+    if (board->bomb_clicked == cell) {
+        shader_set_color(shader_flat, color_red());
+    } else {
+        shader_set_color(shader_flat, color_none());
+    }
+
+    draw_sprite(spr, cell_pixel_pos(board, cell), spr->dims);
+}
+
+static void draw_cell_front(Board *board, Geom *geom, Cell *cell)
+{
+    ASSERT(board);
+    ASSERT(geom);
+    ASSERT(cell);
+
+    Sprite *spr = &cell_sheet.sprites[SPR_CELL_FLAG];
+    if (cell->state != CELL_FLAGGED) {
+        if (cell->state == CELL_EXPLORED) {
+            if (cell->is_bomb) {
+                spr = &cell_sheet.sprites[SPR_CELL_BOMB];
+            } else if (cell->bombs_around > 0) {
+                ASSERT(cell->bombs_around <= 8);
+                spr = &numbers_sheet.sprites[cell->bombs_around - 1];
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+    }
+
+    shader_set_color(shader_flat, color_none());
+    draw_sprite(spr, cell_pixel_pos(board, cell), spr->dims);
+}
+
+static void draw_cells(Board *board)
+{
+    for(u32 i = 0; i < board->num_cells; ++i) {
+        Geom *geom = &cell_geoms[i];
+        Cell *cell = &board->cells[i];
+        draw_cell_back(board, geom, cell);
+        draw_cell_front(board, geom, cell);
+    }
+}
+
 static void draw_face()
 {
     ASSERT(game_state.face_state <= FACE_COOL);
@@ -418,11 +372,48 @@ static void draw_face()
     draw_sprite(spr, pos, spr->dims);
 }
 
+static void draw_borders()
+{
+    // this is gonna be pretty manual...
+    u32 num_borders_x = game_state.pixel_w/BORDER_PIXEL_WIDTH;
+    u32 num_borders_y = game_state.pixel_h/BORDER_PIXEL_HEIGHT;
+    u32 middle_border_y = BORDER_PIXEL_HEIGHT + TOP_INTERIOR_HEIGHT;
+    Sprite *border_sprites = face_sheet.sprites;
+    // corners
+  //  draw_sprite(&border_sprites[])
+    // top
+    //for (u32 i = 1; i < num_borders_x - 1; ++i) {
+//
+  //  }
+    // middle
+    // bottom
+    // left
+    // right
+}
+
 void draw_game()
 {
     render_start(background_color);
-    draw_board(&game_state.board);
+
+    //glLineWidth(1);
+    /* not needed really
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    */
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    /* NOTE we gotta draw things back to front! */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    draw_cells(&game_state.board);
     draw_face();
+    draw_borders();
+
     render_end();
 }
 
@@ -460,6 +451,11 @@ bool draw_init()
 {
     TEXTURES(TEX_LOAD);
 
+    if (!init_spritesheet_uniform(&cell_sheet, TEX_GET(CELL),
+                                  2, 2, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT)) {
+        log_error("Could not init cell sprite sheet");
+        return false;
+    }
     if (!init_spritesheet_uniform(&numbers_sheet, TEX_GET(NUMBERS),
                                   8, 1, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT)) {
         log_error("Could not init numbers sprite sheet");
@@ -467,7 +463,12 @@ bool draw_init()
     }
     if (!init_spritesheet_uniform(&face_sheet, TEX_GET(FACE),
                                   5, 1, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT)) {
-        log_error("Could not init numbers sprite sheet");
+        log_error("Could not init face sprite sheet");
+        return false;
+    }
+    if (!init_spritesheet_uniform(&border_sheet, TEX_GET(BORDER),
+                                  4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT)) {
+        log_error("Could not init border sprite sheet");
         return false;
     }
 

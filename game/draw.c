@@ -65,8 +65,8 @@ typedef struct {
     /* These are floats because they're texture coords */
     f32 t_x;
     f32 t_y;
-    f32 t_width;
-    f32 t_height;
+    f32 s_width;
+    f32 s_height;
 } Sprite;
 
 static Sprite spr_default = {NULL, 0, 0, 1, 1};
@@ -111,20 +111,69 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols,
         return false;
     }
 
-    // half pixel offset
-    f32 x_off = 0.5F/(f32)tex->width;
-    f32 y_off = 0.5F/(f32)tex->height;
-    f32 t_width = (f32)spr_width / (f32)tex->width;
-    f32 t_height = (f32)spr_height / (f32)tex->height;
+    /*
+     * Half pixel offset to make pixel sampling consistent
+     * We have tex coords 0->1 mapping to pixels 0->N
+     * But we want to select the middle of the pixels,
+     * i.e. 0.5->(N-0.5), so this is how to determine that
+     *
+     * e.g.
+     * | are pixel boundaries
+     * {} show the sprites' boundaries
+     * So this is 2 sprites, 4 pixels wide each:
+     * 0        1        2        3        4        5        6        7           <- pixel indices
+     * |{       |        |        |       }|{       |        |        |       }|
+     * 0      0.125     0.25    0.375     0.5               ...                1  <- tex coords
+     * |{       |        |        |       }|{       |        |        |       }|
+     * Each 4-pixel sprite occupies 0.5 units in tex coords
+     * Each pixel occupies 0.5/4 = 0.125 in tex coords
+     * Need to start halfway through a pixel; so 0.125/2 = 0.0625
+     *   0.0625   0.1875   0.3125  0.4375    0.5625  ....                         <- tex coords we want to use
+     *     \/       \/       \/       \/       \/
+     * |{       |        |        |       }|{       |        |        |       }|
+     * Naming of below stuff:
+     * spr_width_tx == sprite width in texture coords
+     * tex_width_px == texture width in pixels
+     * ...etc.
+     * so we have:
+     * spr_width_tx = spr_width_px / tex_width_px
+     * pixel_width_tx = spr_width_tx / spr_width_px
+     * i.e.:
+     * pixel_width_tx = (spr_width_px/tex_width_px)/spr_width_px
+     *                = 1/tex_width_px
+     * start_offset_tx = pixel_width_tx/2
+     * start_offset_tx = 1/tex_width_px/2
+     * start_offset_tx = 0.5/tex_width_px
+     * We also need the width to add to the offset, and we need it in texture units.
+     * It's not just the sprite with in texture units.
+     * See the above diagram: start at 0.0625, then + 0.375 = 0.4375
+     * The width we want is 0.375, not 0.5 which is the full width of the sprite in texture units
+     * And that's just 0.5 - 0.125
+     * i.e:
+     * end_width_tx = spr_width_tx - pixel_width_tx
+     * And the starting offset of the next sprite is start_offset_tx + spr_width_tx
+     */
+    f32 spr_width_tx = (f32)spr_width / (f32)tex->width;
+    f32 px_width_tx = 1.0F / (f32)tex->width;
+    f32 x_off_tx = 0.5F/(f32)tex->width;
+    f32 end_width_tx = spr_width_tx - px_width_tx;
+
+    f32 spr_height_tx = (f32)spr_height / (f32)tex->height;
+    f32 px_height_tx = 1.0F / (f32)tex->height;
+    f32 y_off_tx = 0.5F/(f32)tex->height;
+    f32 end_height_tx = spr_height_tx - px_height_tx;
+
     u32 i = 0;
     for (u32 r = 0; r < rows; ++r) {
         for (u32 c = 0; c < cols; ++c) {
             Sprite *spr = &sheet->sprites[i++];
             spr->tex = tex;
-            spr->t_x = x_off + (f32)c * t_width;
-            spr->t_y = y_off + (f32)r * t_height;
-            spr->t_width = t_width;
-            spr->t_height = t_height;
+            // starting offset
+            spr->t_x = x_off_tx + (f32)c * spr_width_tx;
+            spr->t_y = y_off_tx + (f32)r * spr_height_tx;
+            // width until midway through last pixel
+            spr->s_width = end_width_tx;
+            spr->s_height = end_height_tx;
         }
     }
 
@@ -211,15 +260,15 @@ static void update_cell_geom(Geom *geom, u32 col, u32 row, Sprite *spr)
         }, {
             // bottom left
             {pos_x, pos_y + height, 0},
-            {spr->t_x, spr->t_y + spr->t_height}
+            {spr->t_x, spr->t_y + spr->s_height}
         }, {
             // top right
             {pos_x + width, pos_y, 0},
-            {spr->t_x + spr->t_width, spr->t_y}
+            {spr->t_x + spr->s_width, spr->t_y}
         }, {
             // bottom right
             {pos_x + width, pos_y + height, 0},
-            {spr->t_x + spr->t_width, spr->t_y + spr->t_height}
+            {spr->t_x + spr->s_width, spr->t_y + spr->s_height}
         }
     };
 
@@ -329,15 +378,15 @@ void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
         }, {
             // bottom left
             {pos.x, pos.y + dims.y, 0},
-            {spr->t_x, spr->t_y + spr->t_height}
+            {spr->t_x, spr->t_y + spr->s_height}
         }, {
             // top right
             {pos.x + dims.x, pos.y, 0},
-            {spr->t_x + spr->t_width, spr->t_y}
+            {spr->t_x + spr->s_width, spr->t_y}
         }, {
             // bottom right
             {pos.x + dims.x, pos.y + dims.y, 0},
-            {spr->t_x + spr->t_width, spr->t_y + spr->t_height}
+            {spr->t_x + spr->s_width, spr->t_y + spr->s_height}
         }
     };
 

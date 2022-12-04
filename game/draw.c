@@ -377,15 +377,24 @@ bool draw_start_game(Board* board)
     if (!cell_geoms) {
         return false;
     }
-    // TODO need to clean up cell geom on game end or something
-    for(u32 r = 0; r < board->height; ++r) {
-        u32 r_off = r * board->width;
-        for(u32 c = 0; c < board->width; ++c) {
-            geom_init(&cell_geoms[r_off + c]);
-        }
+    for (u32 i = 0; i < board->num_cells; ++i) {
+        geom_init(&cell_geoms[i]);
     }
 
     return true;
+}
+
+void draw_end_game(Board *board)
+{
+    ASSERT(board);
+    /*
+     * NOTE
+     * when this is first called, board->num_cells will be 0
+     * so this will safely do nothing
+     */
+    for (u32 i = 0; i < board->num_cells; ++i) {
+        geom_deinit(&cell_geoms[i]);
+    }
 }
 
 bool draw_init()

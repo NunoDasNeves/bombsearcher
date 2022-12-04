@@ -319,6 +319,12 @@ static bool game_start()
     ASSERT(mem_get_current_context() == MEM_CTX_SCRATCH);
     Board *board = &game_state.board;
 
+    /*
+     * We both end the current game and start a new one here
+     * TODO if this gets more complicated, should probably
+     * have a game_end() function
+     */
+    draw_end_game(board);
     // end all the scopes
     ASSERT(mem_scratch_scope_end() == -1);
     ASSERT(mem_scratch_scope_begin() == 0);

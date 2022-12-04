@@ -62,11 +62,11 @@ bool __load_texture(const char *name, const char *path, u32 slot)
 
 typedef struct {
     Texture *tex;
-    /* These are floats because they're texture coords */
-    f32 t_x;
-    f32 t_y;
-    f32 s_width;
-    f32 s_height;
+    /* Texture coords */
+    Vec2f pos_tx;
+    Vec2f dims_tx;
+    /* Sprite dims */
+    Vec2f dims;
 } Sprite;
 
 static Sprite spr_default = {NULL, 0, 0, 1, 1};
@@ -169,11 +169,13 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols,
             Sprite *spr = &sheet->sprites[i++];
             spr->tex = tex;
             // starting offset
-            spr->t_x = x_off_tx + (f32)c * spr_width_tx;
-            spr->t_y = y_off_tx + (f32)r * spr_height_tx;
+            spr->pos_tx.x = x_off_tx + (f32)c * spr_width_tx;
+            spr->pos_tx.y = y_off_tx + (f32)r * spr_height_tx;
             // width until midway through last pixel
-            spr->s_width = end_width_tx;
-            spr->s_height = end_height_tx;
+            spr->dims_tx.x = end_width_tx;
+            spr->dims_tx.y = end_height_tx;
+            spr->dims.x = (f32)spr_width;
+            spr->dims.y = (f32)spr_height;
         }
     }
 
@@ -256,19 +258,19 @@ static void update_cell_geom(Geom *geom, u32 col, u32 row, Sprite *spr)
         {
             // top left
             {pos_x, pos_y, 0},
-            {spr->t_x, spr->t_y}
+            {spr->pos_tx.x, spr->pos_tx.y}
         }, {
             // bottom left
             {pos_x, pos_y + height, 0},
-            {spr->t_x, spr->t_y + spr->s_height}
+            {spr->pos_tx.x, spr->pos_tx.y + spr->dims_tx.y}
         }, {
             // top right
             {pos_x + width, pos_y, 0},
-            {spr->t_x + spr->s_width, spr->t_y}
+            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y}
         }, {
             // bottom right
             {pos_x + width, pos_y + height, 0},
-            {spr->t_x + spr->s_width, spr->t_y + spr->s_height}
+            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y + spr->dims_tx.y}
         }
     };
 
@@ -374,40 +376,46 @@ void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
         {
             // top left
             {pos.x, pos.y, 0},
-            {spr->t_x, spr->t_y}
+            {spr->pos_tx.x, spr->pos_tx.y}
         }, {
             // bottom left
             {pos.x, pos.y + dims.y, 0},
-            {spr->t_x, spr->t_y + spr->s_height}
+            {spr->pos_tx.x, spr->pos_tx.y + spr->dims_tx.y}
         }, {
             // top right
             {pos.x + dims.x, pos.y, 0},
-            {spr->t_x + spr->s_width, spr->t_y}
+            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y}
         }, {
             // bottom right
             {pos.x + dims.x, pos.y + dims.y, 0},
-            {spr->t_x + spr->s_width, spr->t_y + spr->s_height}
+            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y + spr->dims_tx.y}
         }
     };
 
     geom_load(geom, verts, sizeof(verts), indices, sizeof(indices), 2);
 }
 
-static void draw_face()
+static void draw_sprite(Sprite *sprite, Vec2f pos, Vec2f dims)
 {
     Geom geom;
-    Vec2f pos = get_face_pos();
-    Vec2f dims = vec2f(FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT);
-    ASSERT(game_state.face_state <= FACE_COOL);
-    Sprite *spr = &face_sheet.sprites[game_state.face_state];
 
-    shader_set_texture(shader_flat, TEX_GET(FACE)); // this does glUseProgram(shader_id);
+    shader_set_texture(shader_flat, sprite->tex);
     geom_init(&geom);
-    geom_load_sprite(&geom, pos, dims, spr);
+    geom_load_sprite(&geom, pos, sprite->dims, sprite);
     glBindVertexArray(geom.vao);
     glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
                    GL_UNSIGNED_INT, 0); // offset
     geom_deinit(&geom);
+}
+
+static void draw_face()
+{
+    ASSERT(game_state.face_state <= FACE_COOL);
+
+    Vec2f pos = get_face_pos();
+    Sprite *spr = &face_sheet.sprites[game_state.face_state];
+
+    draw_sprite(spr, pos, spr->dims);
 }
 
 void draw_game()
@@ -453,12 +461,12 @@ bool draw_init()
     TEXTURES(TEX_LOAD);
 
     if (!init_spritesheet_uniform(&numbers_sheet, TEX_GET(NUMBERS),
-                                  8, 1, 64, 64)) {
+                                  8, 1, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT)) {
         log_error("Could not init numbers sprite sheet");
         return false;
     }
     if (!init_spritesheet_uniform(&face_sheet, TEX_GET(FACE),
-                                  5, 1, 108, 108)) {
+                                  5, 1, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT)) {
         log_error("Could not init numbers sprite sheet");
         return false;
     }

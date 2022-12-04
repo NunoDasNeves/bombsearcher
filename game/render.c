@@ -278,21 +278,30 @@ static Texture* create_fb_texture(u32 width, u32 height)
 Texture *load_texture(const char* filename)
 {
     u64 size;
+    mem_ctx_t mem_ctx;
     u32 width, height;
     unsigned char *image_data;
+    Texture *tex;
 
     ASSERT(filename);
 
     log_debug("Loading texture \"%s\"", filename);
 
+    MEM_SCRATCH_START(mem_ctx);
+
     // read in shader source
     image_data = image_file_read(filename, &size, &width, &height);
     if (image_data == NULL) {
         log_error("Failed to load texture \"%s\"", filename);
+        MEM_SCRATCH_END(mem_ctx);
         return NULL;
     }
 
-    return create_texture(image_data, width, height);
+    tex = create_texture(image_data, width, height);
+
+    MEM_SCRATCH_END(mem_ctx);
+
+    return tex;
 }
 
 static void resize_screen(u32 width, u32 height)
@@ -374,17 +383,27 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         return false;
     }
 
+    mem_set_context(MEM_CTX_SCRATCH);
+    ASSERT(mem_scratch_scope_begin() == 0);
+
     screen.shader = create_shader_program("shaders/screen.vert", "shaders/screen.frag");
     if (!screen.shader) {
         log_error("Failed to create screen shader");
+        mem_scratch_scope_end();
+        mem_set_context(MEM_CTX_NOFREE);
         return false;
     }
 
     shader_flat = create_shader_program("shaders/flat.vert", "shaders/flat.frag");
     if (!shader_flat) {
         log_error("Failed to create flat shader");
+        mem_scratch_scope_end();
+        mem_set_context(MEM_CTX_NOFREE);
         return false;
     }
+
+    ASSERT(mem_scratch_scope_end() == -1);
+    mem_set_context(MEM_CTX_NOFREE);
 
     // we want the origin to be in the top left
     Mat4 proj_matrix = mat4_ortho(0, (f32)width,  // left at 0, right at pixel width

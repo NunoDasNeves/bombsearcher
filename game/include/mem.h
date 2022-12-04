@@ -83,6 +83,21 @@ int mem_scratch_scope_end();
 int mem_get_scratch_scope();
 
 /*
+ * Helpers combining mem_set_context and mem_scratch_scope_begin
+ * These should be paired so ctx variable is reset
+ */
+#define MEM_SCRATCH_START(ctx) \
+    do {    \
+        ctx = mem_set_context(MEM_CTX_SCRATCH); \
+        mem_scratch_scope_begin(); \
+    } while (0)
+#define MEM_SCRATCH_END(ctx) \
+    do {    \
+        mem_set_context(ctx); \
+        mem_scratch_scope_end(); \
+    } while (0)
+
+/*
  * context-dependent allocation - can be used in place of malloc/free
  * These will use init, scratch (in the current scratch scope) or longterm depending on context
  */

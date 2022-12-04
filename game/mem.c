@@ -243,6 +243,7 @@ bool mem_init(u64 mem_budget)
         return false;
     }
 
+    scratch.current_scope = MEM_SCRATCH_SCOPE_NONE;
     for (u32 i = 0; i < MEM_SCRATCH_BUFFERS; ++i) {
         if (!bump_try_create(scratch.bumps[i], mem_budget, platform_alloc_page_aligned)) {
             log_error("Failed on scratch #%u", i);

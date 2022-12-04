@@ -1,6 +1,8 @@
 ## TODO
-- flexible layout/size
 - don't leak memory - use scoped allocators
-- face should be...better
-- select difficulty
+- face should look...better
+- select difficulty, set size based on it
+
+## DONE
+- flexible layout/size
 

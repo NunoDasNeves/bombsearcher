@@ -48,6 +48,7 @@ extern Texture *empty_texture;
 
 void shader_set_texture(GLuint shader_id, Texture* texture);
 void shader_set_color(GLuint shader_id, Color color);
+void shader_set_transform_pixels(GLuint shader_id, u32 width, u32 height);
 
 Texture *create_texture(void* image_data, u32 width, u32 height);
 Texture *load_texture(const char* filename);
@@ -55,7 +56,7 @@ Texture *load_texture(const char* filename);
 void render_start(Color color);
 void render_end();
 
-void render_resize(u32 width, u32 height);
+void render_resize_window(u32 width, u32 height);
 
 bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height);
 

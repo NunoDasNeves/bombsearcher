@@ -71,6 +71,7 @@ u32 resize_window_to_game(u32 desired_width, u32 desired_height)
         window_h >>= 1;
         scale++;
     }
+    // don't scale down by more than 2*2
     window_w = MAX(window_w, desired_width>>2);
     window_h = MAX(window_h, desired_height>>2);
 
@@ -102,7 +103,7 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
                 {
                     int width, height;
                     SDL_GL_GetDrawableSize(window, &width, &height);
-                    render_resize(width, height);
+                    render_resize_window(width, height);
                     break;
                 }
             }

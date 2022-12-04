@@ -422,6 +422,8 @@ bool draw_start_game(Board* board)
 {
     ASSERT(board);
 
+    shader_set_transform_pixels(shader_flat, game_state.pixel_w, game_state.pixel_h);
+
     cell_geoms = mem_alloc(sizeof(Geom)*board->num_cells);
     if (!cell_geoms) {
         return false;

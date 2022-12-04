@@ -128,6 +128,7 @@ void handle_input(Board *board, Input input)
     Vec2f face_pos = get_face_pos();
     Input last_input = game_state.last_input;
 
+    // convert window pixel coords to game pixel coords determined by scaling power
     input.mouse_x <<= game_state.window_scale;
     input.mouse_y <<= game_state.window_scale;
 
@@ -337,8 +338,8 @@ static bool game_start(GameParams params)
     game_state.time_started = SDL_GetTicks64();
     game_state.face_state = FACE_SMILE;
     game_state.playing = true;
-    game_state.pixel_w = INIT_GAME_WINDOW_WIDTH;
-    game_state.pixel_h = INIT_GAME_WINDOW_HEIGHT;
+    game_state.pixel_w = params.width * CELL_PIXEL_WIDTH + BORDER_PIXEL_WIDTH * 2;
+    game_state.pixel_h = params.height * CELL_PIXEL_HEIGHT + BORDER_PIXEL_HEIGHT * 3 + TOP_INTERIOR_HEIGHT;
     game_state.window_needs_resize = true;
     game_state.window_scale = 0;
     game_state.params = params;

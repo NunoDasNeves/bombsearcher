@@ -88,6 +88,21 @@ static void shader_set_transform(GLuint shader_id,
     dump_errors();
 }
 
+void shader_set_transform_pixels(GLuint shader_id, u32 width, u32 height)
+{
+    log_debug("Resizing ortho transform (%u, %u)", width, height);
+    // we want the origin to be in the top left
+    Mat4 proj_matrix = mat4_ortho(0, (f32)width,  // left at 0, right at pixel width
+                                  (f32)height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
+                                  -1, 1);
+    Mat4 view_matrix = mat4_ident();
+    Mat4 model_matrix = mat4_ident();
+    shader_set_transform(shader_id,
+                         &proj_matrix,
+                         &view_matrix,
+                         &model_matrix);
+}
+
 // TODO split into load and create
 static GLuint load_shader(const char *filename, unsigned type)
 {
@@ -304,10 +319,11 @@ Texture *load_texture(const char* filename)
     return tex;
 }
 
-static void resize_screen(u32 width, u32 height)
+static void render_resize_screen_tex(u32 width, u32 height)
 {
     ASSERT(screen.texture);
 
+    log_debug("Resizing screen texture (%d, %d)", width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, screen.texture->fb_id);
 
     /* resize texture and renderbuffer */
@@ -320,7 +336,7 @@ static void resize_screen(u32 width, u32 height)
     dump_errors();
 }
 
-void render_resize(u32 width, u32 height)
+void render_resize_window(u32 width, u32 height)
 {
     // TODO check glGetIntegerv(GL_MAX_VIEWPORT_DIMS, GLint *max_dims);
     viewport_aspect = (f32)width / (f32)height;
@@ -328,9 +344,9 @@ void render_resize(u32 width, u32 height)
     gl_viewport_height = height;
     glViewport(gl_viewport_x, gl_viewport_y, gl_viewport_width, gl_viewport_height);
     dump_errors();
-    log_debug("Resizing viewport (%d, %d)", gl_viewport_width, gl_viewport_height);
+    log_debug("Resizing gl viewport (%d, %d)", gl_viewport_width, gl_viewport_height);
 
-    resize_screen(gl_viewport_width, gl_viewport_height);
+    render_resize_screen_tex(width, height);
 }
 
 /* render screen triangle */
@@ -405,17 +421,6 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     ASSERT(mem_scratch_scope_end() == -1);
     mem_set_context(MEM_CTX_NOFREE);
 
-    // we want the origin to be in the top left
-    Mat4 proj_matrix = mat4_ortho(0, (f32)width,  // left at 0, right at pixel width
-                                  (f32)height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
-                                  -1, 1);
-    Mat4 view_matrix = mat4_ident();
-    Mat4 model_matrix = mat4_ident();
-    shader_set_transform(shader_flat,
-                         &proj_matrix,
-                         &view_matrix,
-                         &model_matrix);
-
     if (!pool_try_create(texture_pool, MAX_TEXTURES,
                          Texture, mem_alloc)) {
         return false;
@@ -433,7 +438,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     screen.texture = create_fb_texture(width, height);
     shader_set_texture(screen.shader, screen.texture);
 
-    render_resize(width, height);
+    render_resize_window(width, height);
 
     return true;
 }

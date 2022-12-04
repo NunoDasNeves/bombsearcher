@@ -30,18 +30,9 @@ static const GameParams game_easy = { 9, 9, 10 };
 static const GameParams game_medium = { 16, 16, 40 };
 static const GameParams game_hard = { 30, 16, 99 };
 
+// default to easy
 #define INIT_GAME_WINDOW_WIDTH ( ((BORDER_PIXEL_WIDTH) * 2) + ((game_easy.width) * (CELL_PIXEL_WIDTH)) )
-#define INIT_GAME_WINDOW_HEIGHT ( ((BORDER_PIXEL_WIDTH) * 3) + ((game_easy.height) * (CELL_PIXEL_WIDTH)) + (TOP_INTERIOR_HEIGHT) )
-
-static inline Vec2f get_face_pos()
-{
-    // TODO get width dynamically
-    Vec2f pos = vec2f(
-        (f32)(INIT_GAME_WINDOW_WIDTH/2 - FACE_PIXEL_WIDTH/2),
-        (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1)) // i.e. border + top_interior/2 - face_height/2
-    );
-    return pos;
-}
+#define INIT_GAME_WINDOW_HEIGHT ( ((BORDER_PIXEL_WIDTH) * 3) + ((game_easy.height) * (CELL_PIXEL_HEIGHT)) + (TOP_INTERIOR_HEIGHT) )
 
 enum {
     CELL_UNEXPLORED = 0,
@@ -129,6 +120,16 @@ typedef struct {
 } GameState;
 
 extern GameState game_state;
+
+static inline Vec2f get_face_pos()
+{
+    // TODO get width dynamically
+    Vec2f pos = vec2f(
+        (f32)(game_state.pixel_w/2 - FACE_PIXEL_WIDTH/2),
+        (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1)) // i.e. border + top_interior/2 - face_height/2
+    );
+    return pos;
+}
 
 u32 resize_window_to_game(u32 desired_width, u32 desired_height);
 

@@ -39,21 +39,26 @@ typedef struct {
 #define TEX_GET(e) \
     textures[TEX_##e]
 
-#define TEX_LOAD(s, e, n) \
-    do {    \
-        textures[TEX_##e] = load_texture("assets/"s".png"); \
-        if (!textures[TEX_##e]) {   \
-            log_error("Failed to load texture: "s); \
-            textures[TEX_##e] = empty_texture;  \
-        }   \
-    } while (0);
-
 enum {
     TEXTURES(TEX_ENUM)
     TEX_NUM_TEXTURES
 };
 
 Texture *textures[TEX_NUM_TEXTURES] = {0};
+
+bool __load_texture(const char *name, const char *path, u32 slot)
+{
+    ASSERT(slot < TEX_NUM_TEXTURES);
+    textures[slot] = load_texture(path);
+    if (!textures[slot]) {
+        log_error("Failed to load texture \"%s\"", name);
+        textures[slot] = empty_texture;
+        return false;
+    }
+    return true;
+}
+#define TEX_LOAD(s, e, n) \
+    __load_texture(s, "assets/"s".png", TEX_##e);
 
 typedef struct {
     Texture *tex;

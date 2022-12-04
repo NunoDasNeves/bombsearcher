@@ -456,7 +456,7 @@ bool draw_init()
         return false;
     }
     if (!init_spritesheet_uniform(&face_sheet, TEX_GET(FACE),
-                                  5, 1, 128, 128)) {
+                                  5, 1, 108, 108)) {
         log_error("Could not init numbers sprite sheet");
         return false;
     }

@@ -52,11 +52,12 @@ enum {
     MEM_CTX_LONGTERM = 2, /* long term; freeable */
     MEM_CTX_OTHER    = 3  /* not managed by mem module */
 };
+typedef u8 mem_ctx_t;
 
 /* sets context, returns the previous context (so you can restore it later if you want) */
-unsigned mem_set_context(unsigned type); // MEM_* enum
-unsigned mem_get_current_context();
-unsigned mem_get_context(void * ptr);
+mem_ctx_t mem_set_context(mem_ctx_t type); // MEM_* enum
+mem_ctx_t mem_get_current_context();
+mem_ctx_t mem_get_context(void * ptr);
 
 /*
  * For creating pools for longterm allocations
@@ -66,20 +67,20 @@ unsigned mem_get_context(void * ptr);
 #define MEM_LONGTERM_BUCKET_MIN (1 << (MEM_LONGTERM_BUCKET_MIN_POW))
 #define MEM_LONGTERM_BUCKET_MAX (1 << (MEM_LONGTERM_BUCKET_MAX_POW))
 
+#define MEM_SCRATCH_SCOPE_NONE (-1)
 #define MEM_SCRATCH_BUFFERS 4
 /*
- * Increment the scratch scope, moving to a new scratch buffer if the resulting scope is
- * less than MEM_SCRATCH_BUFFERS
- * return the new scope
+ * Increment the scratch scope to a max of MEM_SCRATCH_BUFFERS - 1
+ * Return the new scope in the range [0, MEM_SCRATCH_BUFFERS)
  */
-unsigned mem_scratch_scope_begin();
+int mem_scratch_scope_begin();
 /*
- * Decrement the scratch scope by 1, freeing the current scratch buffer if the previous
- * scope was less than MEM_SCRATCH_SCOPES
- * return the new scope
+ * Free the current scratch buffer if there is one
+ * Decrement the scratch scope to a minimum of -1
+ * Return the new scope. May return -1 which means not in a scope
  */
-unsigned mem_scratch_scope_end();
-unsigned mem_get_scratch_scope();
+int mem_scratch_scope_end();
+int mem_get_scratch_scope();
 
 /*
  * context-dependent allocation - can be used in place of malloc/free

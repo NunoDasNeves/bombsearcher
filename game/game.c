@@ -13,6 +13,8 @@
 
 GameState game_state;
 
+static bool game_needs_restart = false;
+
 static bool game_start();
 
 enum {
@@ -180,7 +182,7 @@ void handle_input(Board *board, Input input)
                 break;
             }
             if (face_is_under_mouse) {
-                game_start();
+                game_needs_restart = true;
             }
             break;
         }
@@ -207,6 +209,8 @@ void handle_input(Board *board, Input input)
 bool game_update_and_render(Input input)
 {
     Board *board = &game_state.board;
+    mem_ctx_t mem_ctx = mem_set_context(MEM_CTX_SCRATCH);
+    ASSERT(mem_scratch_scope_begin() == 1);
 
     if (game_state.window_needs_resize) {
         game_state.window_scale =
@@ -228,6 +232,17 @@ bool game_update_and_render(Input input)
 
     draw_game();
     game_state.last_input = input;
+
+    ASSERT(mem_scratch_scope_end() == 0);
+
+    if (game_needs_restart) {
+        game_needs_restart = false;
+        game_start();
+    }
+
+    mem_ctx = mem_set_context(mem_ctx);
+    ASSERT(mem_ctx == MEM_CTX_SCRATCH);
+
     return true;
 }
 
@@ -242,11 +257,13 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     board->bombs_left = (i64)num_bombs;
     board->num_bombs = num_bombs;
     board->num_cells = num_cells;
-    board->cells = mem_alloc(sizeof(Cell) * num_cells);
+    // TODO calloc
+    board->cells = mem_alloc(num_cells * sizeof(Cell));
     if (!board->cells) {
         log_error("Failed to allocate board");
         return false;
     }
+    memset(board->cells, 0, num_cells * sizeof(Cell));
     board->cell_last_clicked = board->cells;
     board->bomb_clicked = NULL;
 
@@ -299,12 +316,18 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
 
 static bool game_start()
 {
+    ASSERT(mem_get_current_context() == MEM_CTX_SCRATCH);
     Board *board = &game_state.board;
+
+    // end all the scopes
+    ASSERT(mem_scratch_scope_end() == -1);
+    ASSERT(mem_scratch_scope_begin() == 0);
 
     if (!board_init(board, CELLS_NUM_X_EASY, CELLS_NUM_Y_EASY, CELLS_NUM_BOMBS_EASY)) {
         log_error("Failed to init board");
         return false;
     }
+    // TODO start timer on click
     game_state.time_started = SDL_GetTicks64();
     game_state.face_state = FACE_SMILE;
     game_state.playing = true;
@@ -323,15 +346,17 @@ static bool game_start()
 
 bool game_init()
 {
-    if (!game_start()) {
-        log_error("Failed to start game");
-        return false;
-    }
-
     if (!draw_init()) {
         log_error("Failed to init draw");
         return false;
     }
+
+    mem_set_context(MEM_CTX_SCRATCH);
+    if (!game_start()) {
+        log_error("Failed to start game");
+        return false;
+    }
+    mem_set_context(MEM_CTX_NOFREE);
 
     return true;
 }

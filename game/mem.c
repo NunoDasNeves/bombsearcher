@@ -18,19 +18,20 @@ C_BEGIN
 static u64 allocated; // allocated - freed
 static u64 footprint; // allocated
 
-static unsigned current_context;
+static mem_ctx_t current_context;
 
 static struct {
     BumpAllocator bumps[MEM_SCRATCH_BUFFERS];
-    unsigned current_scope;
-    u64 allocated;
-    u64 footprint;
+    int current_scope;
+    u64 allocated[MEM_SCRATCH_BUFFERS];
+    u64 footprint[MEM_SCRATCH_BUFFERS];
 } scratch;
 
+#define NUM_POOLS ((MEM_LONGTERM_BUCKET_MAX_POW) - (MEM_LONGTERM_BUCKET_MIN_POW))
 static struct {
-    struct PoolAllocator pools[MEM_LONGTERM_BUCKET_MAX_POW - MEM_LONGTERM_BUCKET_MIN_POW];
-    u64 allocated;
-    u64 footprint;
+    struct PoolAllocator pools[NUM_POOLS];
+    u64 allocated[NUM_POOLS];
+    u64 footprint[NUM_POOLS];
 } longterm;
 
 static struct {
@@ -39,18 +40,21 @@ static struct {
     u64 footprint;
 } nofree;
 
-unsigned mem_set_context(unsigned type)
+mem_ctx_t mem_set_context(mem_ctx_t type)
 {
-    // TODO
+    mem_ctx_t ctx = current_context;
+    if (type >= 0 && type < MEM_CTX_OTHER) {
+        current_context = type;
+    }
+    return ctx;
+}
+
+mem_ctx_t mem_get_current_context()
+{
     return current_context;
 }
 
-unsigned mem_get_current_context()
-{
-    return current_context;
-}
-
-unsigned mem_get_context(void * ptr)
+mem_ctx_t mem_get_context(void * ptr)
 {
     if (ptr >= nofree.bump.base && (char *)ptr < (char *)nofree.bump.base + nofree.bump.size) {
         return MEM_CTX_NOFREE;
@@ -61,22 +65,41 @@ unsigned mem_get_context(void * ptr)
     return MEM_CTX_OTHER;
 }
 
-unsigned mem_scratch_scope_begin()
+int mem_scratch_scope_begin()
 {
-    // TODO
-    return 0;
+    ASSERT(scratch.current_scope >= -1);
+    ASSERT(scratch.current_scope < MEM_SCRATCH_BUFFERS);
+
+    if (scratch.current_scope < MEM_SCRATCH_BUFFERS - 1) {
+        scratch.current_scope++;
+    }
+    return scratch.current_scope;;
 }
 
-unsigned mem_scratch_scope_end()
+int mem_scratch_scope_end()
 {
-    // TODO
-    return 0;
+    ASSERT(scratch.current_scope >= -1);
+    ASSERT(scratch.current_scope < MEM_SCRATCH_BUFFERS);
+
+    if (scratch.current_scope < 0) {
+        return MEM_SCRATCH_SCOPE_NONE;
+    }
+    bump_reset(&scratch.bumps[scratch.current_scope]);
+    // bookkeeping
+    allocated -= scratch.allocated[scratch.current_scope];
+    scratch.allocated[scratch.current_scope] = 0;
+    if (scratch.current_scope >= 0) {
+        scratch.current_scope--;
+    }
+    return scratch.current_scope;;
 }
 
-unsigned mem_get_scratch_scope()
+int mem_get_scratch_scope()
 {
-    // TODO
-    return 0;
+    ASSERT(scratch.current_scope >= -1);
+    ASSERT(scratch.current_scope < MEM_SCRATCH_BUFFERS);
+
+    return scratch.current_scope;;
 }
 
 void *mem_alloc(u64 size)
@@ -88,7 +111,7 @@ void *mem_alloc(u64 size)
         }
         case MEM_CTX_SCRATCH:
         {
-            return NULL;
+            return mem_alloc_scratch(size);
         }
         case MEM_CTX_LONGTERM:
         {
@@ -152,12 +175,6 @@ void mem_free(void *ptr)
     // TODO
 }
 
-void *mem_alloc_scratch(u64 size)
-{
-    // TODO
-    return NULL;
-}
-
 void *mem_alloc_longterm(u64 size)
 {
     // TODO
@@ -194,6 +211,14 @@ static void *mem_alloc_bump(BumpAllocator *bump, u64 size,
     return ret;
 }
 
+void *mem_alloc_scratch(u64 size)
+{
+    return mem_alloc_bump(&scratch.bumps[scratch.current_scope],
+                          size,
+                          &scratch.allocated[scratch.current_scope],
+                          &scratch.footprint[scratch.current_scope]);
+}
+
 void *mem_alloc_nofree(u64 size)
 {
     return mem_alloc_bump(&nofree.bump, size,
@@ -216,6 +241,13 @@ bool mem_init(u64 mem_budget)
 
     if (!bump_try_create(nofree.bump, mem_budget, platform_alloc_page_aligned)) {
         return false;
+    }
+
+    for (u32 i = 0; i < MEM_SCRATCH_BUFFERS; ++i) {
+        if (!bump_try_create(scratch.bumps[i], mem_budget, platform_alloc_page_aligned)) {
+            log_error("Failed on scratch #%u", i);
+            return false;
+        }
     }
 
     // TODO MEM_CTX_LONGTERM

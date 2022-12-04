@@ -68,14 +68,18 @@ mem_ctx_t mem_get_context(void * ptr);
 #define MEM_LONGTERM_BUCKET_MAX (1 << (MEM_LONGTERM_BUCKET_MAX_POW))
 
 #define MEM_SCRATCH_SCOPE_NONE (-1)
+#define MEM_SCRATCH_SCOPE_MAX INT_MAX
 #define MEM_SCRATCH_BUFFERS 4
 /*
- * Increment the scratch scope to a max of MEM_SCRATCH_BUFFERS - 1
- * Return the new scope in the range [0, MEM_SCRATCH_BUFFERS)
+ * Increment the scratch scope, unless it's MEM_SCRATCH_SCOPE_MAX
+ * The scope may exceed MEM_SCRATCH_BUFFERS, but the highest buffer
+ * that will actually be used to allocate is MEM_SCRATCH_BUFFERS - 1
+ * Return the new scope
  */
 int mem_scratch_scope_begin();
 /*
- * Free the current scratch buffer if there is one
+ * If the current scratch scope is in the range [0,MEM_SCRATCH_BUFFERS),
+ * then free the current scratch buffer
  * Decrement the scratch scope to a minimum of -1
  * Return the new scope. May return -1 which means not in a scope
  */

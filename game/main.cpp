@@ -11,6 +11,13 @@
 #include"render.h"
 #include"game.h"
 
+/*
+ * Note on setting stbi allocators
+ * stbi allocs and frees everything within the stbi_load_* variants,
+ * it doesn't maintain any state, so it's safe to use with scratch/scoped allocators
+ * So we give it the generic context-sensitive mem_alloc()/mem_free(),
+ * that way we control the context of that memory and when it's freed
+ */
 #define STBI_MALLOC(sz) mem_alloc(sz)
 #define STBI_REALLOC_SIZED(p,oldsz,newsz) mem_realloc_sized(p,oldsz,newsz)
 #define STBI_FREE(p) mem_free(p)

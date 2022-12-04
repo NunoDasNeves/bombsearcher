@@ -67,19 +67,22 @@ mem_ctx_t mem_get_context(void * ptr)
 
 int mem_scratch_scope_begin()
 {
-    ASSERT(scratch.current_scope >= -1);
-    ASSERT(scratch.current_scope < MEM_SCRATCH_BUFFERS);
+    ASSERT(scratch.current_scope >= MEM_SCRATCH_SCOPE_NONE);
+    ASSERT(scratch.current_scope < MEM_SCRATCH_SCOPE_MAX);
 
-    if (scratch.current_scope < MEM_SCRATCH_BUFFERS - 1) {
-        scratch.current_scope++;
+    if (scratch.current_scope == MEM_SCRATCH_SCOPE_MAX) {
+        log_error("Scratch scope is max! This is probably very bad");
+        return scratch.current_scope;
     }
-    return scratch.current_scope;;
+
+    scratch.current_scope++;
+    return scratch.current_scope;
 }
 
 int mem_scratch_scope_end()
 {
-    ASSERT(scratch.current_scope >= -1);
-    ASSERT(scratch.current_scope < MEM_SCRATCH_BUFFERS);
+    ASSERT(scratch.current_scope >= MEM_SCRATCH_SCOPE_NONE);
+    ASSERT(scratch.current_scope <= MEM_SCRATCH_SCOPE_MAX);
 
     if (scratch.current_scope < 0) {
         return MEM_SCRATCH_SCOPE_NONE;
@@ -213,10 +216,17 @@ static void *mem_alloc_bump(BumpAllocator *bump, u64 size,
 
 void *mem_alloc_scratch(u64 size)
 {
-    return mem_alloc_bump(&scratch.bumps[scratch.current_scope],
+    int idx = scratch.current_scope;
+    if (idx < 0) {
+        return NULL;
+    }
+    if (idx >= MEM_SCRATCH_BUFFERS) {
+        idx = MEM_SCRATCH_BUFFERS - 1;
+    }
+    return mem_alloc_bump(&scratch.bumps[idx],
                           size,
-                          &scratch.allocated[scratch.current_scope],
-                          &scratch.footprint[scratch.current_scope]);
+                          &scratch.allocated[idx],
+                          &scratch.footprint[idx]);
 }
 
 void *mem_alloc_nofree(u64 size)

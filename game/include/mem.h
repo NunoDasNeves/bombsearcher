@@ -141,7 +141,7 @@ void mem_free_longterm(void *ptr);
 // alternative free for imgui, labelled cb because looks like a callback
 static void mem_free_longterm_cb(void *ptr, void *data)
 {
-    return mem_free_longterm(ptr);
+    mem_free_longterm(ptr);
 }
 
 void mem_get_allocated(u64 *allocated, u64 *footprint);

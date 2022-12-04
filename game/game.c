@@ -236,6 +236,11 @@ bool game_update_and_render(Input input)
 
     ASSERT(mem_scratch_scope_end() == 0);
 
+#ifdef DEBUG
+    gui_FPS();
+#endif
+    gui_difficulty();
+
     if (game_needs_restart) {
         game_needs_restart = false;
         game_start(game_state.params);

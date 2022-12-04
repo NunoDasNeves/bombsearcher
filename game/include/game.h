@@ -116,6 +116,7 @@ typedef struct {
     u32 pixel_h;
     u32 window_scale; // window is scaled down by >>window_scale
     bool window_needs_resize;
+    f32 main_menu_bar_height_window_px;
     GameParams params;
 } GameState;
 
@@ -132,6 +133,9 @@ static inline Vec2f get_face_pos()
 }
 
 u32 resize_window_to_game(u32 desired_width, u32 desired_height);
+
+void gui_FPS();
+void gui_difficulty();
 
 void draw_game();
 void draw_end_game(Board *board);

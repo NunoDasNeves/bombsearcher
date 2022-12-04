@@ -49,7 +49,7 @@ set COMMON_LINKER_FLAGS=/OUT:%EXE_NAME% /INCREMENTAL:NO /SUBSYSTEM:CONSOLE
 set LINKER_FLAGS=%COMMON_LINKER_FLAGS% %PLATFORM_LINKER_FLAGS% /DEBUG:FULL
 
 set IMGUI_SOURCES=%IMGUI_DIR%\backends\imgui_impl_sdl.cpp %IMGUI_DIR%\backends\imgui_impl_opengl3.cpp %IMGUI_DIR%\imgui*.cpp
-set GAME_CPP_SOURCES=..\game\main.cpp
+set GAME_CPP_SOURCES=..\game\main.cpp ..\game\gui.cpp
 set GAME_C_SOURCES=..\game\windows.c ..\game\log.c ..\game\mem.c ..\game\render.c ..\game\game.c ..\game\file.c ..\game\draw.c
 
 :: Create build directory

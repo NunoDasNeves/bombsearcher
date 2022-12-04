@@ -275,7 +275,13 @@ int main(int argc, char **argv)
     SDL_Event e;
 
     while(keep_running) {
-        /* starting the imgui frame before processing input seems to be easiest way to get imgui_io.WantCaptureMouse etc to actually work, contrary to the examples */
+        /*
+         * Note
+         * starting the imgui frame before processing input seems to be the
+         * easiest way to get imgui_io.WantCaptureMouse etc to actually work,
+         * contrary to the examples
+         */
+        // Imgui boilerplate: start frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
@@ -292,14 +298,13 @@ int main(int argc, char **argv)
             keep_running = false;
         }
 
+        // Imgui boilerplate: end frame
         ImGui::Render();
         glViewport(0, 0, (int)imgui_io.DisplaySize.x, (int)imgui_io.DisplaySize.y);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Swap buffers (actually make the image appear)
         SDL_GL_SwapWindow(window);
-
-
     }
 
     ImGui_ImplOpenGL3_Shutdown();

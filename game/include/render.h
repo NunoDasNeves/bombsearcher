@@ -48,7 +48,7 @@ extern Texture *empty_texture;
 
 void shader_set_texture(GLuint shader_id, Texture* texture);
 void shader_set_color(GLuint shader_id, Color color);
-void shader_set_transform_pixels(GLuint shader_id, u32 width, u32 height);
+void shader_set_transform_pixels(GLuint shader_id, f32 width, f32 height);
 
 Texture *create_texture(void* image_data, u32 width, u32 height);
 Texture *load_texture(const char* filename);

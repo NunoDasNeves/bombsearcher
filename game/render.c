@@ -88,12 +88,12 @@ static void shader_set_transform(GLuint shader_id,
     dump_errors();
 }
 
-void shader_set_transform_pixels(GLuint shader_id, u32 width, u32 height)
+void shader_set_transform_pixels(GLuint shader_id, f32 width, f32 height)
 {
-    log_debug("Resizing ortho transform (%u, %u)", width, height);
+    log_debug("Resizing ortho transform (%f, %f)", width, height);
     // we want the origin to be in the top left
-    Mat4 proj_matrix = mat4_ortho(0, (f32)width,  // left at 0, right at pixel width
-                                  (f32)height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
+    Mat4 proj_matrix = mat4_ortho(0, width,  // left at 0, right at pixel width
+                                  height, 0, // bottom at height, top at 0, so y=0 == height, y=height == 0
                                   -1, 1);
     Mat4 view_matrix = mat4_ident();
     Mat4 model_matrix = mat4_ident();

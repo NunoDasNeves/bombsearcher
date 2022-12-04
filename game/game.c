@@ -125,15 +125,16 @@ void handle_input(Board *board, Input input)
 {
     Cell *cell_under_mouse = NULL;
     bool face_is_under_mouse = false;
-    Vec2f face_pos = get_face_pos();
+    Vec2f face_pos = face_pos_px();
+    Vec2f cells_offset = cells_offset_px();
     Input last_input = game_state.last_input;
 
     // convert window pixel coords to game pixel coords determined by scaling power
     input.mouse_x <<= game_state.window_scale;
     input.mouse_y <<= game_state.window_scale;
 
-    i64 mouse_x_off = (i64)input.mouse_x - CELLS_X_OFF;
-    i64 mouse_y_off = (i64)input.mouse_y - CELLS_Y_OFF;
+    i64 mouse_x_off = (i64)input.mouse_x - (i64)cells_offset.x;
+    i64 mouse_y_off = (i64)input.mouse_y - (i64)cells_offset.y;
     if (mouse_x_off >= 0 && mouse_y_off >= 0) {
         i64 mouse_cell_col = mouse_x_off / CELL_PIXEL_WIDTH;
         i64 mouse_cell_row = mouse_y_off / CELL_PIXEL_HEIGHT;
@@ -213,9 +214,10 @@ bool game_update_and_render(Input input)
     mem_ctx_t mem_ctx = mem_set_context(MEM_CTX_SCRATCH);
     ASSERT(mem_scratch_scope_begin() == 1);
 
+    /* Need to do this in render loop so we can get game window decorations from OS */
     if (game_state.window_needs_resize) {
-        game_state.window_scale =
-                resize_window_to_game(game_state.pixel_w, game_state.pixel_h);
+        Vec2f game_dims = game_window_dims_px();
+        game_state.window_scale = resize_window_to_game((u32)game_dims.x, (u32)game_dims.y);
         game_state.window_needs_resize = false;
     }
 
@@ -343,8 +345,6 @@ static bool game_start(GameParams params)
     game_state.time_started = SDL_GetTicks64();
     game_state.face_state = FACE_SMILE;
     game_state.playing = true;
-    game_state.pixel_w = params.width * CELL_PIXEL_WIDTH + BORDER_PIXEL_WIDTH * 2;
-    game_state.pixel_h = params.height * CELL_PIXEL_HEIGHT + BORDER_PIXEL_HEIGHT * 3 + TOP_INTERIOR_HEIGHT;
     game_state.window_needs_resize = true;
     game_state.window_scale = 0;
     game_state.params = params;

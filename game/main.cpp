@@ -78,8 +78,6 @@ u32 resize_window_to_game(u32 desired_width, u32 desired_height)
     log_debug("Resizing window to %u %u", window_w, window_h);
     SDL_SetWindowSize(window, (int)window_w, (int)window_h);
 
-    desired_width = window_w;
-    desired_height = window_h;
     return scale;
 }
 
@@ -205,10 +203,14 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    // TODO maybe guess more accurate width and height
+    const int DEFAULT_WINDOW_WIDTH = 640;
+    const int DEFAULT_WINDOW_HEIGHT = 480;
+
     window = SDL_CreateWindow(
         "Game",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        INIT_GAME_WINDOW_WIDTH, INIT_GAME_WINDOW_HEIGHT,
+        DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,
         SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL);
     
     if(window == NULL) {
@@ -245,7 +247,7 @@ int main(int argc, char **argv)
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Load OpenGL extensions with GLAD
-    if (!render_init((GLADloadproc)SDL_GL_GetProcAddress, INIT_GAME_WINDOW_WIDTH, INIT_GAME_WINDOW_HEIGHT)) {
+    if (!render_init((GLADloadproc)SDL_GL_GetProcAddress, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)) {
         log_error("Failed to initialize render");
         return EXIT_FAILURE;
     }

@@ -50,20 +50,10 @@ void gui_FPS()
 
 void gui_difficulty()
 {
-    // Start the main window
-    //ImGui::Begin("Difficulty Window");//, NULL, ImGuiWindowFlags_MenuBar | gui_flags);
-
-    // Set the window position
-    //ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-
-    //ImGui::GetStyle().WindowPadding = ImVec2(0.0f, 0.0f);
-    //ImGui::GetStyle().WindowRounding = 0.0f;
-
     if (ImGui::BeginMainMenuBar())
     {
 
         game_state.main_menu_bar_height_window_px = ImGui::GetFrameHeight();
-        //log_error("frame height %u", (u32)game_state.main_menu_bar_height_window_px >> game_state.window_scale);
 
         // Create the "Difficulty" menubar menu
         if (ImGui::BeginMenu("Difficulty"))
@@ -81,9 +71,6 @@ void gui_difficulty()
         // End the menubar
         ImGui::EndMainMenuBar();
     }
-
-    // End the main window
-    //ImGui::End();
 }
 
 C_END

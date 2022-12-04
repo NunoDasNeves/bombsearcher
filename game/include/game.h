@@ -17,9 +17,6 @@ C_BEGIN
 #define BORDER_PIXEL_HEIGHT BORDER_PIXEL_WIDTH
 #define TOP_INTERIOR_HEIGHT ((FACE_PIXEL_HEIGHT) + 64)
 
-#define CELLS_X_OFF BORDER_PIXEL_WIDTH
-#define CELLS_Y_OFF ( (TOP_INTERIOR_HEIGHT) + ((BORDER_PIXEL_HEIGHT) * 2) )
-
 typedef struct {
     u32 width;
     u32 height;
@@ -29,10 +26,6 @@ typedef struct {
 static const GameParams game_easy = { 9, 9, 10 };
 static const GameParams game_medium = { 16, 16, 40 };
 static const GameParams game_hard = { 30, 16, 99 };
-
-// default to easy
-#define INIT_GAME_WINDOW_WIDTH ( ((BORDER_PIXEL_WIDTH) * 2) + ((game_easy.width) * (CELL_PIXEL_WIDTH)) )
-#define INIT_GAME_WINDOW_HEIGHT ( ((BORDER_PIXEL_WIDTH) * 3) + ((game_easy.height) * (CELL_PIXEL_HEIGHT)) + (TOP_INTERIOR_HEIGHT) )
 
 enum {
     CELL_UNEXPLORED = 0,
@@ -112,8 +105,6 @@ typedef struct {
     u64 time_started;
     u8 face_state;
     bool playing;
-    u32 pixel_w;
-    u32 pixel_h;
     u32 window_scale; // window is scaled down by >>window_scale
     bool window_needs_resize;
     f32 main_menu_bar_height_window_px;
@@ -122,11 +113,33 @@ typedef struct {
 
 extern GameState game_state;
 
-static inline Vec2f get_face_pos()
+static f32 menu_bar_y_offset_px()
 {
-    // TODO get width dynamically
+    return 19;//(f32)((u32)game_state.main_menu_bar_height_window_px >> game_state.window_scale);
+}
+
+static Vec2f game_window_dims_px()
+{
+
+    return vec2f(
+        (f32)(((BORDER_PIXEL_WIDTH) * 2) + ((game_state.params.width) * (CELL_PIXEL_WIDTH))),
+        (f32)(((BORDER_PIXEL_WIDTH) * 3) + ((game_state.params.height) * (CELL_PIXEL_HEIGHT)) + (TOP_INTERIOR_HEIGHT) + (u32)menu_bar_y_offset_px())
+    );
+}
+
+static Vec2f cells_offset_px()
+{
+    return vec2f(
+        (f32)BORDER_PIXEL_WIDTH,
+        (f32)((TOP_INTERIOR_HEIGHT) + ((BORDER_PIXEL_HEIGHT) * 2) + (u32)menu_bar_y_offset_px())
+    );
+}
+
+static Vec2f face_pos_px()
+{
+    Vec2f game_dims = game_window_dims_px();
     Vec2f pos = vec2f(
-        (f32)(game_state.pixel_w/2 - FACE_PIXEL_WIDTH/2),
+        (f32)(((u32)game_dims.x - FACE_PIXEL_WIDTH) >> 1), // i.e. window_width/2 - face_width/2
         (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1)) // i.e. border + top_interior/2 - face_height/2
     );
     return pos;

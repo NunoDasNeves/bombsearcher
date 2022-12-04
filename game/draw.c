@@ -289,10 +289,11 @@ static Vec2f cell_pixel_pos(Board *board, Cell *cell)
 
     i64 col, row;
     Vec2f pos;
+    Vec2f offset = cells_offset_px();
 
     board_cell_to_pos(board, cell, &col, &row);
-    pos.x = CELLS_X_OFF + (f32)col * CELL_PIXEL_WIDTH;
-    pos.y = CELLS_Y_OFF + (f32)row * CELL_PIXEL_WIDTH;
+    pos.x = offset.x + (f32)col * CELL_PIXEL_WIDTH;
+    pos.y = offset.y + (f32)row * CELL_PIXEL_WIDTH;
 
     return pos;
 }
@@ -366,17 +367,15 @@ static void draw_face()
 {
     ASSERT(game_state.face_state <= FACE_COOL);
 
-    Vec2f pos = get_face_pos();
     Sprite *spr = &face_sheet.sprites[game_state.face_state];
-
-    draw_sprite(spr, pos, spr->dims);
+    draw_sprite(spr, face_pos_px(), spr->dims);
 }
 
 static void draw_borders()
 {
     // this is gonna be pretty manual...
-    u32 num_borders_x = game_state.pixel_w/BORDER_PIXEL_WIDTH;
-    u32 num_borders_y = game_state.pixel_h/BORDER_PIXEL_HEIGHT;
+    //u32 num_borders_x = game_state.pixel_w/BORDER_PIXEL_WIDTH;
+    //u32 num_borders_y = game_state.pixel_h/BORDER_PIXEL_HEIGHT;
     u32 middle_border_y = BORDER_PIXEL_HEIGHT + TOP_INTERIOR_HEIGHT;
     Sprite *border_sprites = face_sheet.sprites;
     // corners
@@ -421,7 +420,8 @@ bool draw_start_game(Board* board)
 {
     ASSERT(board);
 
-    shader_set_transform_pixels(shader_flat, game_state.pixel_w, game_state.pixel_h);
+    Vec2f dims = game_window_dims_px();
+    shader_set_transform_pixels(shader_flat, dims.x, dims.y);
 
     cell_geoms = mem_alloc(sizeof(Geom)*board->num_cells);
     if (!cell_geoms) {

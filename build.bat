@@ -1,6 +1,6 @@
 @echo off
 
-set EXE_NAME=Game.exe
+set EXE_NAME=BombSearcher.exe
 
 set SDL_DIR=C:\SDL2-2.26.0\
 set IMGUI_DIR=..\imgui

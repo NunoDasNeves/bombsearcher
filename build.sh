@@ -1,5 +1,5 @@
 #/bin/bash
-EXECUTABLE_NAME="Game"
+EXECUTABLE_NAME="BombSearcher"
 BUILD_DIR="build"
 GAME_DIR="${PWD}/game"
 SDL_LIB_DIR="/usr/local/lib"

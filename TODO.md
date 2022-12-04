@@ -1,6 +1,7 @@
 ## TODO
 - bug: after game ends, click on face and release elsewhere
 - face should look...better
+- borders
 - display bombs left
 - timer counting up as you play
 - display timer

@@ -15,7 +15,7 @@ GameState game_state;
 
 static bool game_needs_restart = false;
 
-static bool game_start();
+static bool game_start(GameParams params);
 
 enum {
     MOUSE_NONE = 0,
@@ -237,7 +237,7 @@ bool game_update_and_render(Input input)
 
     if (game_needs_restart) {
         game_needs_restart = false;
-        game_start();
+        game_start(game_state.params);
     }
 
     mem_ctx = mem_set_context(mem_ctx);
@@ -314,7 +314,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     return true;
 }
 
-static bool game_start()
+static bool game_start(GameParams params)
 {
     ASSERT(mem_get_current_context() == MEM_CTX_SCRATCH);
     Board *board = &game_state.board;
@@ -329,7 +329,7 @@ static bool game_start()
     ASSERT(mem_scratch_scope_end() == -1);
     ASSERT(mem_scratch_scope_begin() == 0);
 
-    if (!board_init(board, CELLS_NUM_X_EASY, CELLS_NUM_Y_EASY, CELLS_NUM_BOMBS_EASY)) {
+    if (!board_init(board, params.width, params.height, params.num_bombs)) {
         log_error("Failed to init board");
         return false;
     }
@@ -341,6 +341,7 @@ static bool game_start()
     game_state.pixel_h = INIT_GAME_WINDOW_HEIGHT;
     game_state.window_needs_resize = true;
     game_state.window_scale = 0;
+    game_state.params = params;
 
     if (!draw_start_game(board)) {
         log_error("Failed to init draw state for board");
@@ -358,7 +359,7 @@ bool game_init()
     }
 
     mem_set_context(MEM_CTX_SCRATCH);
-    if (!game_start()) {
+    if (!game_start(game_easy)) {
         log_error("Failed to start game");
         return false;
     }

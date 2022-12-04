@@ -13,25 +13,32 @@ C_BEGIN
 #define CELL_PIXEL_HEIGHT CELL_PIXEL_WIDTH
 #define FACE_PIXEL_WIDTH 108
 #define FACE_PIXEL_HEIGHT FACE_PIXEL_WIDTH
-#define BORDER_WIDTH 32
-#define TOP_INTERIOR_HEIGHT ((FACE_PIXEL_HEIGHT) + 32)
+#define BORDER_PIXEL_WIDTH 16
+#define BORDER_PIXEL_HEIGHT BORDER_PIXEL_WIDTH
+#define TOP_INTERIOR_HEIGHT ((FACE_PIXEL_HEIGHT) + 64)
 
-#define CELLS_X_OFF BORDER_WIDTH
-#define CELLS_Y_OFF ( (TOP_INTERIOR_HEIGHT) + ((BORDER_WIDTH) * 2) )
+#define CELLS_X_OFF BORDER_PIXEL_WIDTH
+#define CELLS_Y_OFF ( (TOP_INTERIOR_HEIGHT) + ((BORDER_PIXEL_HEIGHT) * 2) )
 
-#define CELLS_NUM_X_EASY 9
-#define CELLS_NUM_Y_EASY 9
-#define CELLS_NUM_BOMBS_EASY 10
+typedef struct {
+    u32 width;
+    u32 height;
+    u32 num_bombs;
+} GameParams;
 
-#define INIT_GAME_WINDOW_WIDTH ( ((BORDER_WIDTH) * 2) + ((CELLS_NUM_X_EASY) * (CELL_PIXEL_WIDTH)) )
-#define INIT_GAME_WINDOW_HEIGHT ( ((BORDER_WIDTH) * 3) + ((CELLS_NUM_Y_EASY) * (CELL_PIXEL_WIDTH)) + (TOP_INTERIOR_HEIGHT) )
+static const GameParams game_easy = { 9, 9, 10 };
+static const GameParams game_medium = { 16, 16, 40 };
+static const GameParams game_hard = { 30, 16, 99 };
+
+#define INIT_GAME_WINDOW_WIDTH ( ((BORDER_PIXEL_WIDTH) * 2) + ((game_easy.width) * (CELL_PIXEL_WIDTH)) )
+#define INIT_GAME_WINDOW_HEIGHT ( ((BORDER_PIXEL_WIDTH) * 3) + ((game_easy.height) * (CELL_PIXEL_WIDTH)) + (TOP_INTERIOR_HEIGHT) )
 
 static inline Vec2f get_face_pos()
 {
     // TODO get width dynamically
     Vec2f pos = vec2f(
-        INIT_GAME_WINDOW_WIDTH/2 - FACE_PIXEL_WIDTH/2,
-        BORDER_WIDTH + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1) // i.e. border + top_interior/2 - face_height/2
+        (f32)(INIT_GAME_WINDOW_WIDTH/2 - FACE_PIXEL_WIDTH/2),
+        (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1)) // i.e. border + top_interior/2 - face_height/2
     );
     return pos;
 }
@@ -118,6 +125,7 @@ typedef struct {
     u32 pixel_h;
     u32 window_scale; // window is scaled down by >>window_scale
     bool window_needs_resize;
+    GameParams params;
 } GameState;
 
 extern GameState game_state;

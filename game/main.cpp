@@ -232,6 +232,8 @@ int main(int argc, char **argv)
     }
 
     // Init IMGUI
+    // TODO use longterm allocators
+    //ImGui::SetAllocatorFunctions(mem_alloc_cb, mem_free_cb, NULL);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& imgui_io = ImGui::GetIO();

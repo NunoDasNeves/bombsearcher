@@ -216,8 +216,7 @@ bool game_update_and_render(Input input)
 
     /* Need to do this in render loop so we can get game window decorations from OS */
     if (game_state.window_needs_resize) {
-        Vec2f game_dims = game_window_dims_px();
-        game_state.window_scale = resize_window_to_game((u32)game_dims.x, (u32)game_dims.y);
+        game_state.window_scale = resize_window_to_game();
         game_state.window_needs_resize = false;
     }
 
@@ -370,6 +369,9 @@ bool game_init()
         return false;
     }
     mem_set_context(MEM_CTX_NOFREE);
+
+    // Try and resize the window correctly before the first frame
+    game_state.window_scale = resize_window_to_game();
 
     return true;
 }

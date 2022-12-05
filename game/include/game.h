@@ -145,7 +145,7 @@ static Vec2f face_pos_px()
     return pos;
 }
 
-u32 resize_window_to_game(u32 desired_width, u32 desired_height);
+u32 resize_window_to_game();
 
 void gui_FPS();
 void gui_difficulty();

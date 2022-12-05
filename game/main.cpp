@@ -28,11 +28,14 @@
 bool keep_running = true;
 
 /* return how much it's scaled down in power of 2 */
-u32 resize_window_to_game(u32 desired_width, u32 desired_height)
+u32 resize_window_to_game()
 {
     SDL_Window *window = SDL_GL_GetCurrentWindow();
     SDL_DisplayMode mode;
     int top, left, bot, right;
+    Vec2f game_dims = game_window_dims_px();
+    u32 desired_width = (u32)game_dims.x;
+    u32 desired_height = (u32)game_dims.y;
 
     if (SDL_GetDesktopDisplayMode(0, &mode) < 0)
     {

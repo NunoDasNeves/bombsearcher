@@ -438,8 +438,6 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     screen.texture = create_fb_texture(width, height);
     shader_set_texture(screen.shader, screen.texture);
 
-    render_resize_window(width, height);
-
     return true;
 }
 

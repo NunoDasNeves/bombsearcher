@@ -13,7 +13,7 @@ typedef struct {
     GLuint ebo;
 } Geom;
 
-Color background_color = COLOR_RGB8(40,40,40);
+Color background_color = COLOR_RGB8(153,153,153);
 Geom *cell_geoms;
 
 #define VERTEX_POS_ARRAY_ATTRIB 0
@@ -379,7 +379,7 @@ static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
     return &sheet->sprites[row * sheet->cols + col];
 }
 
-static void draw_borders()
+static void draw_borders(Board *board)
 {
     // this is gonna be pretty manual...
     Vec2f game_dims = game_window_dims_px();
@@ -413,8 +413,43 @@ static void draw_borders()
     Vec2f pos_bot_right = vec2f_add(pos_bot_left, offset_right);
     draw_sprite(get_sprite(&border_sheet, 2, 1), pos_bot_left, spr_dims);
     draw_sprite(get_sprite(&border_sheet, 3, 1), pos_bot_right, spr_dims);
-    // TODO vert
-    // TODO horiz
+    // vert
+    Sprite *spr_vert = get_sprite(&border_sheet, 0, 0);
+    u32 num_borders_y_top = TOP_INTERIOR_HEIGHT / BORDER_PIXEL_HEIGHT;
+    u32 num_borders_y_cells = (board->height * CELL_PIXEL_HEIGHT) / BORDER_PIXEL_HEIGHT;
+    Vec2f pos_left = pos_top_left;
+    Vec2f pos_right = vec2f_add(pos_left, offset_right);
+    for (u32 i = 0; i < num_borders_y_top; ++i) {
+        // inc first to skip top row
+        pos_left.y += (f32)BORDER_PIXEL_HEIGHT;
+        pos_right.y += (f32)BORDER_PIXEL_HEIGHT;
+        draw_sprite(spr_vert, pos_left, spr_dims);
+        draw_sprite(spr_vert, pos_right, spr_dims);
+    }
+    // skip middle joins
+    pos_left.y += (f32)BORDER_PIXEL_HEIGHT;
+    pos_right.y += (f32)BORDER_PIXEL_HEIGHT;
+    for (u32 i = 0; i < num_borders_y_cells; ++i) {
+        // inc first to skip top row
+        pos_left.y += (f32)BORDER_PIXEL_HEIGHT;
+        pos_right.y += (f32)BORDER_PIXEL_HEIGHT;
+        draw_sprite(spr_vert, pos_left, spr_dims);
+        draw_sprite(spr_vert, pos_right, spr_dims);
+    }
+    // horiz
+    Sprite *spr_horiz = get_sprite(&border_sheet, 1, 0);
+    u32 num_borders_x_interior = num_borders_x - 2;
+    Vec2f pos_top = pos_top_left;
+    Vec2f pos_mid = pos_mid_left;
+    Vec2f pos_bot = pos_bot_left;
+    for (u32 i = 0; i < num_borders_x_interior; ++i) {
+        pos_top.x += (f32)BORDER_PIXEL_WIDTH;
+        pos_mid.x += (f32)BORDER_PIXEL_WIDTH;
+        pos_bot.x += (f32)BORDER_PIXEL_WIDTH;
+        draw_sprite(spr_horiz, pos_top, spr_dims);
+        draw_sprite(spr_horiz, pos_mid, spr_dims);
+        draw_sprite(spr_horiz, pos_bot, spr_dims);
+    }
 }
 
 void draw_game()
@@ -438,7 +473,7 @@ void draw_game()
 
     draw_cells(&game_state.board);
     draw_face();
-    draw_borders();
+    draw_borders(&game_state.board);
 
     render_end();
 }

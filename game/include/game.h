@@ -140,7 +140,7 @@ static Vec2f face_pos_px()
     Vec2f game_dims = game_window_dims_px();
     Vec2f pos = vec2f(
         (f32)(((u32)game_dims.x - FACE_PIXEL_WIDTH) >> 1), // i.e. window_width/2 - face_width/2
-        (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1)) // i.e. border + top_interior/2 - face_height/2
+        (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1) + (u32)menu_bar_y_offset_px()) // i.e. border + top_interior/2 - face_height/2
     );
     return pos;
 }

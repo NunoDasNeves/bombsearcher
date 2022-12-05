@@ -347,6 +347,8 @@ static bool game_start(GameParams params)
     game_state.window_needs_resize = true;
     game_state.window_scale = 0;
     game_state.params = params;
+    // TODO this is an estimate...not sure how to do it better
+    game_state.main_menu_bar_height_window_px = 19;
 
     if (!draw_start_game(board)) {
         log_error("Failed to init draw state for board");

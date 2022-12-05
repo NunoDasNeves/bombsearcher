@@ -15,7 +15,8 @@ C_BEGIN
 #define FACE_PIXEL_HEIGHT FACE_PIXEL_WIDTH
 #define BORDER_PIXEL_WIDTH 16
 #define BORDER_PIXEL_HEIGHT BORDER_PIXEL_WIDTH
-#define TOP_INTERIOR_HEIGHT ((FACE_PIXEL_HEIGHT) + 64)
+// interior height should be a multiple of BORDER_PIXEL_HEIGHT
+#define TOP_INTERIOR_HEIGHT ( (FACE_PIXEL_HEIGHT) + 20 + ((BORDER_PIXEL_HEIGHT) * 2) )
 
 typedef struct {
     u32 width;
@@ -115,15 +116,15 @@ extern GameState game_state;
 
 static f32 menu_bar_y_offset_px()
 {
-    return 19;//(f32)((u32)game_state.main_menu_bar_height_window_px >> game_state.window_scale);
+    return (f32)((u32)game_state.main_menu_bar_height_window_px << game_state.window_scale);
 }
 
 static Vec2f game_window_dims_px()
 {
 
     return vec2f(
-        (f32)(((BORDER_PIXEL_WIDTH) * 2) + ((game_state.params.width) * (CELL_PIXEL_WIDTH))),
-        (f32)(((BORDER_PIXEL_WIDTH) * 3) + ((game_state.params.height) * (CELL_PIXEL_HEIGHT)) + (TOP_INTERIOR_HEIGHT) + (u32)menu_bar_y_offset_px())
+        (f32)(((BORDER_PIXEL_WIDTH) * 2) + (game_state.params.width * CELL_PIXEL_WIDTH)),
+        (f32)((BORDER_PIXEL_HEIGHT * 3) + (game_state.params.height * CELL_PIXEL_HEIGHT) + TOP_INTERIOR_HEIGHT + (u32)menu_bar_y_offset_px())
     );
 }
 

@@ -37,6 +37,8 @@ u32 resize_window_to_game()
     u32 desired_width = (u32)game_dims.x;
     u32 desired_height = (u32)game_dims.y;
 
+    log_debug("Desired game dims %u %u", desired_width, desired_height);
+
     if (SDL_GetDesktopDisplayMode(0, &mode) < 0)
     {
         log_error("Couldn't get desktop display mode: %s", SDL_GetError());
@@ -62,8 +64,6 @@ u32 resize_window_to_game()
     u32 max_w = ((mode.w - left - right) * 4) / 5;
     u32 max_h = ((mode.h - top - bot) * 4) / 5;
     log_debug("Max size to occupy: %u %u", max_w, max_h);
-
-    log_debug("Desired game dims %u %u", desired_width, desired_height);
 
     u32 window_w = desired_width;
     u32 window_h = desired_height;

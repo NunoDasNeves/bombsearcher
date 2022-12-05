@@ -59,21 +59,21 @@ u32 resize_window_to_game()
     log_debug("Window borders: %d %d %d %d", top, left, bot, right);
 
     /*
-     * Reduce by window borders, then multiply a fraction...
+     * Reduce by window borders, then subtract another 20 px for good measure
      * Should give an estimate of how much space it's ok to occupy
-     * ...Hopefully
      */
-    u32 max_w = ((mode.w - left - right) * 4) / 5;
-    u32 max_h = ((mode.h - top - bot) * 4) / 5;
+    u32 max_w = (mode.w - left - right) - 20;
+    u32 max_h = (mode.h - top - bot) - 20;
+    /*
+     * We also need to account for the menu bar's real height (window pixels);
+     * so remove that from max_h too
+     */
+    max_h -= (u32)game_state.main_menu_bar_height_window_px;
     log_debug("Max size to occupy: %u %u", max_w, max_h);
 
     u32 window_w = desired_width;
     u32 window_h = desired_height;
     u32 scale = 0;
-
-    // we need to account for the menu bar's real height (window pixels); so remove that from max_h,
-    // instead of adding it to window_h, because we want to cleanly divide window_h by 2
-    max_h -= (u32)game_state.main_menu_bar_height_window_px;
 
     while (window_w > max_w || window_h > max_h) {
         window_w >>= 1;

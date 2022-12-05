@@ -16,4 +16,10 @@ static inline Vec2f vec2f(f32 x, f32 y)
     return v;
 }
 
+static inline Vec2f vec2f_add(Vec2f a, Vec2f b)
+{
+    Vec2f v = {{a.x + b.x, a.y + b.y}};
+    return v;
+}
+
 C_END

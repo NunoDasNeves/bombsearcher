@@ -371,23 +371,50 @@ static void draw_face()
     draw_sprite(spr, face_pos_px(), spr->dims);
 }
 
+static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
+{
+    ASSERT(sheet);
+    ASSERT(col < sheet->cols);
+    ASSERT(row < sheet->rows);
+    return &sheet->sprites[row * sheet->cols + col];
+}
+
 static void draw_borders()
 {
     // this is gonna be pretty manual...
-    //u32 num_borders_x = game_state.pixel_w/BORDER_PIXEL_WIDTH;
-    //u32 num_borders_y = game_state.pixel_h/BORDER_PIXEL_HEIGHT;
-    u32 middle_border_y = BORDER_PIXEL_HEIGHT + TOP_INTERIOR_HEIGHT;
-    Sprite *border_sprites = face_sheet.sprites;
-    // corners
-  //  draw_sprite(&border_sprites[])
-    // top
-    //for (u32 i = 1; i < num_borders_x - 1; ++i) {
-//
-  //  }
-    // middle
-    // bottom
-    // left
-    // right
+    Vec2f game_dims = game_window_dims_px();
+    // top left of borders (below the menu bar)
+    Vec2f border_orig = vec2f(0, menu_bar_y_offset_px());
+    // size of a border sprite
+    Vec2f spr_dims = vec2f(BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT);
+    // total border tiles in each direction
+    u32 num_borders_x = (u32)(game_dims.x - border_orig.x)/BORDER_PIXEL_WIDTH;
+    u32 num_borders_y = (u32)(game_dims.y - border_orig.y)/BORDER_PIXEL_HEIGHT;
+    //log_error("(%u %u)", num_borders_x, num_borders_y);
+    //log_error("%f", game_dims.y - border_orig.y);
+    // offset to get to right border from left border
+    Vec2f offset_right = vec2f((num_borders_x - 1) * BORDER_PIXEL_WIDTH, 0);
+    // offset to get to mid border from top
+    Vec2f offset_mid = vec2f(0, BORDER_PIXEL_HEIGHT + TOP_INTERIOR_HEIGHT);
+    // offset to get to bottom border from top
+    Vec2f offset_bot = vec2f(0, (num_borders_y - 1) * BORDER_PIXEL_HEIGHT);
+    // top corners
+    Vec2f pos_top_left = border_orig;
+    Vec2f pos_top_right = vec2f_add(border_orig, offset_right);
+    draw_sprite(get_sprite(&border_sheet, 0, 1), pos_top_left, spr_dims);
+    draw_sprite(get_sprite(&border_sheet, 1, 1), pos_top_right, spr_dims);
+    // middle joins
+    Vec2f pos_mid_left = vec2f_add(border_orig, offset_mid);
+    Vec2f pos_mid_right = vec2f_add(pos_mid_left, offset_right);
+    draw_sprite(get_sprite(&border_sheet, 0, 2), pos_mid_left, spr_dims);
+    draw_sprite(get_sprite(&border_sheet, 1, 2), pos_mid_right, spr_dims);
+    // bottom corners
+    Vec2f pos_bot_left = vec2f_add(border_orig, offset_bot);
+    Vec2f pos_bot_right = vec2f_add(pos_bot_left, offset_right);
+    draw_sprite(get_sprite(&border_sheet, 2, 1), pos_bot_left, spr_dims);
+    draw_sprite(get_sprite(&border_sheet, 3, 1), pos_bot_right, spr_dims);
+    // TODO vert
+    // TODO horiz
 }
 
 void draw_game()

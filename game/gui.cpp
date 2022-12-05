@@ -52,8 +52,8 @@ void gui_difficulty()
 {
     if (ImGui::BeginMainMenuBar())
     {
-
-        game_state.main_menu_bar_height_window_px = ImGui::GetFrameHeight();
+        ImVec2 window_dims = ImGui::GetWindowSize();
+        game_state.main_menu_bar_height_window_px = window_dims.y;//ImGui::GetFrameHeight();
 
         // Create the "Difficulty" menubar menu
         if (ImGui::BeginMenu("Difficulty"))

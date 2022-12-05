@@ -382,7 +382,7 @@ static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
 static void draw_borders(Board *board)
 {
     // this is gonna be pretty manual...
-    Vec2f game_dims = game_window_dims_px();
+    Vec2f game_dims = game_dims_px();
     // top left of borders (below the menu bar)
     Vec2f border_orig = vec2f(0, menu_bar_y_offset_px());
     // size of a border sprite
@@ -478,12 +478,15 @@ void draw_game()
     render_end();
 }
 
+void draw_resize()
+{
+    Vec2f dims = game_dims_px();
+    shader_set_transform_pixels(shader_flat, dims.x, dims.y);
+}
+
 bool draw_start_game(Board* board)
 {
     ASSERT(board);
-
-    Vec2f dims = game_window_dims_px();
-    shader_set_transform_pixels(shader_flat, dims.x, dims.y);
 
     cell_geoms = mem_alloc(sizeof(Geom)*board->num_cells);
     if (!cell_geoms) {

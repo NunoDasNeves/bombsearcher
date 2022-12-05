@@ -119,12 +119,19 @@ static f32 menu_bar_y_offset_px()
     return (f32)((u32)game_state.main_menu_bar_height_window_px << game_state.window_scale);
 }
 
-static Vec2f game_window_dims_px()
+static Vec2f game_dims_px()
 {
-
     return vec2f(
         (f32)(((BORDER_PIXEL_WIDTH) * 2) + (game_state.params.width * CELL_PIXEL_WIDTH)),
         (f32)((BORDER_PIXEL_HEIGHT * 3) + (game_state.params.height * CELL_PIXEL_HEIGHT) + TOP_INTERIOR_HEIGHT + (u32)menu_bar_y_offset_px())
+    );
+}
+
+static Vec2f game_dims_px_no_menu()
+{
+    return vec2f(
+        (f32)(((BORDER_PIXEL_WIDTH) * 2) + (game_state.params.width * CELL_PIXEL_WIDTH)),
+        (f32)((BORDER_PIXEL_HEIGHT * 3) + (game_state.params.height * CELL_PIXEL_HEIGHT) + TOP_INTERIOR_HEIGHT)
     );
 }
 
@@ -138,7 +145,7 @@ static Vec2f cells_offset_px()
 
 static Vec2f face_pos_px()
 {
-    Vec2f game_dims = game_window_dims_px();
+    Vec2f game_dims = game_dims_px();
     Vec2f pos = vec2f(
         (f32)(((u32)game_dims.x - FACE_PIXEL_WIDTH) >> 1), // i.e. window_width/2 - face_width/2
         (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1) + (u32)menu_bar_y_offset_px()) // i.e. border + top_interior/2 - face_height/2
@@ -152,6 +159,7 @@ void gui_FPS();
 void gui_difficulty();
 
 void draw_game();
+void draw_resize();
 void draw_end_game(Board *board);
 bool draw_start_game(Board* board);
 bool draw_init();

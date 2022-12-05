@@ -211,12 +211,29 @@ void handle_input(Board *board, Input input)
 bool game_update_and_render(Input input)
 {
     Board *board = &game_state.board;
+
+/*
+ * We draw the menu bar at the start of the frame because
+ * resize_window_to_game depends on getting its height
+ * (we could also hardcode the height, see start_game())
+ */
+#ifdef DEBUG
+    gui_FPS();
+#endif
+    gui_difficulty();
+
     mem_ctx_t mem_ctx = mem_set_context(MEM_CTX_SCRATCH);
     ASSERT(mem_scratch_scope_begin() == 1);
 
-    /* Need to do this in render loop so we can get game window decorations from OS */
+    // TODO maybe have special calibration function to do all this
+    // janky resizing stuff that needs to happen after some stuff
+    // is already rendered...
+    /* Need to do this in render loop so we can get game window
+     * decoration size from OS
+     */
     if (game_state.window_needs_resize) {
         game_state.window_scale = resize_window_to_game();
+        draw_resize();
         game_state.window_needs_resize = false;
     }
 
@@ -236,11 +253,6 @@ bool game_update_and_render(Input input)
     game_state.last_input = input;
 
     ASSERT(mem_scratch_scope_end() == 0);
-
-#ifdef DEBUG
-    gui_FPS();
-#endif
-    gui_difficulty();
 
     if (game_needs_restart) {
         game_needs_restart = false;
@@ -345,9 +357,10 @@ static bool game_start(GameParams params)
     game_state.face_state = FACE_SMILE;
     game_state.playing = true;
     game_state.window_needs_resize = true;
-    game_state.window_scale = 0;
+    // Reset the scale to something really wrong... should be visible if there's a problem
+    game_state.window_scale = 99999;
     game_state.params = params;
-    // TODO this is an estimate...not sure how to do it better
+    // We make a guess here, but the rendering loop is arranged so we don't really have to
     game_state.main_menu_bar_height_window_px = 19;
 
     if (!draw_start_game(board)) {

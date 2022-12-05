@@ -33,10 +33,12 @@ u32 resize_window_to_game()
     SDL_Window *window = SDL_GL_GetCurrentWindow();
     SDL_DisplayMode mode;
     int top, left, bot, right;
-    Vec2f game_dims = game_window_dims_px();
+    Vec2f game_dims = game_dims_px_no_menu();
     u32 desired_width = (u32)game_dims.x;
     u32 desired_height = (u32)game_dims.y;
 
+    log_debug("Main menu bar height window pixels : %u", (u32)game_state.main_menu_bar_height_window_px);
+    //log_debug("Main menu bar height in game pixels: %u", (u32)menu_bar_y_offset_px());
     log_debug("Desired game dims %u %u", desired_width, desired_height);
 
     if (SDL_GetDesktopDisplayMode(0, &mode) < 0)
@@ -57,7 +59,7 @@ u32 resize_window_to_game()
     log_debug("Window borders: %d %d %d %d", top, left, bot, right);
 
     /*
-     * Reduce by window borders, then multiply by 2/3
+     * Reduce by window borders, then multiply a fraction...
      * Should give an estimate of how much space it's ok to occupy
      * ...Hopefully
      */
@@ -69,16 +71,25 @@ u32 resize_window_to_game()
     u32 window_h = desired_height;
     u32 scale = 0;
 
-    while (window_w > max_w || window_h > max_h) {
+    // we need to account for the menu bar's real height (window pixels); so remove that from max_h,
+    // instead of adding it to window_h, because we want to cleanly divide window_h by 2
+    max_h -= (u32)game_state.main_menu_bar_height_window_px;
+
+    //while (window_w > max_w || window_h > max_h) {
         window_w >>= 1;
         window_h >>= 1;
         scale++;
-    }
+    //}
+
     // don't scale down by more than 2*2
     window_w = MAX(window_w, desired_width>>2);
     window_h = MAX(window_h, desired_height>>2);
 
+    // add back the menu bar height so we set the window height to account for it
+    window_h += (u32)game_state.main_menu_bar_height_window_px;
+
     log_debug("Resizing window to %u %u", window_w, window_h);
+    log_debug("Scale power %u", scale);
     SDL_SetWindowSize(window, (int)window_w, (int)window_h);
 
     return scale;

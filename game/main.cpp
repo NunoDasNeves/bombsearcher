@@ -75,11 +75,11 @@ u32 resize_window_to_game()
     // instead of adding it to window_h, because we want to cleanly divide window_h by 2
     max_h -= (u32)game_state.main_menu_bar_height_window_px;
 
-    //while (window_w > max_w || window_h > max_h) {
+    while (window_w > max_w || window_h > max_h) {
         window_w >>= 1;
         window_h >>= 1;
         scale++;
-    //}
+    }
 
     // don't scale down by more than 2*2
     window_w = MAX(window_w, desired_width>>2);

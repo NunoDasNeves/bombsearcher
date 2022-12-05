@@ -284,6 +284,14 @@ static void draw_sprite(Sprite *sprite, Vec2f pos, Vec2f dims)
     geom_deinit(&geom);
 }
 
+static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
+{
+    ASSERT(sheet);
+    ASSERT(col < sheet->cols);
+    ASSERT(row < sheet->rows);
+    return &sheet->sprites[row * sheet->cols + col];
+}
+
 static Vec2f cell_pixel_pos(Board *board, Cell *cell)
 {
 
@@ -367,16 +375,21 @@ static void draw_face()
 {
     ASSERT(game_state.face_state <= FACE_COOL);
 
-    Sprite *spr = &face_sheet.sprites[game_state.face_state];
-    draw_sprite(spr, face_pos_px(), spr->dims);
-}
+    Vec2f pos_back = face_pos_px();
+    Vec2f pos_front = pos_back;
+    u32 back_spr_idx = 0;
 
-static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
-{
-    ASSERT(sheet);
-    ASSERT(col < sheet->cols);
-    ASSERT(row < sheet->rows);
-    return &sheet->sprites[row * sheet->cols + col];
+    if (game_state.face_clicked) {
+        // move face to match button press when clicked
+        pos_front = vec2f_add(pos_front, vec2f(3, 3));
+        back_spr_idx = 1;
+    }
+
+    Sprite *spr_back = get_sprite(&face_sheet, back_spr_idx, 1);
+    draw_sprite(spr_back, pos_back, spr_back->dims);
+
+    Sprite *spr_front = get_sprite(&face_sheet, game_state.face_state, 0);
+    draw_sprite(spr_front, pos_front, spr_front->dims);
 }
 
 static void draw_borders(Board *board)
@@ -527,7 +540,7 @@ bool draw_init()
         return false;
     }
     if (!init_spritesheet_uniform(&face_sheet, TEX_GET(FACE),
-                                  5, 1, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT)) {
+                                  5, 2, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT)) {
         log_error("Could not init face sprite sheet");
         return false;
     }

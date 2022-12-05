@@ -171,7 +171,7 @@ void handle_input(Board *board, Input input)
                 break;
             }
             if (face_is_under_mouse) {
-                game_state.face_state = FACE_CLICKED;
+                game_state.face_clicked = true;
             }
             break;
         }
@@ -242,11 +242,12 @@ bool game_update_and_render(Input input)
         board->cell_last_clicked->state = CELL_UNEXPLORED;
     }
 
-    // reset face in case no longer clicking
-    // if not playing we want to leave it in win/lose state
     if (game_state.playing) {
+        // Switch FACE_SCARED back to smile by default
         game_state.face_state = FACE_SMILE;
     }
+    game_state.face_clicked = false;
+
     handle_input(board, input);
 
     draw_game();

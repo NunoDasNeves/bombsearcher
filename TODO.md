@@ -1,6 +1,4 @@
 ## TODO
-- bug: after game ends, click on face and release elsewhere
-- make clicking on face retain same expression until release
 - display bombs left
 - timer counting up as you play
 - display timer
@@ -12,6 +10,8 @@
 - debug display key toggle
 
 ## DONE
+- bug: after game ends, click on face and release elsewhere
+- make clicking on face retain same expression until release
 - start new game from Difficulty menu
 - borders
 - imgui menu to select difficulty

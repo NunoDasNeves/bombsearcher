@@ -87,7 +87,6 @@ static void board_cell_to_pos(Board *board, Cell *cell, i64 *c, i64 *r)
 
 enum {
     FACE_SMILE = 0,
-    FACE_CLICKED,
     FACE_SCARED,
     FACE_DEAD,
     FACE_COOL
@@ -102,14 +101,15 @@ typedef struct {
 
 typedef struct {
     Board board;
-    Input last_input;
+    Input last_input; // input from previous frame
     u64 time_started;
-    u8 face_state;
-    bool playing;
-    u32 window_scale; // window is scaled down by >>window_scale
+    u8 face_state; // one of FACE_SMILE, FACE_SCARED, etc
+    bool face_clicked;
+    bool playing; // cells can be clicked on
+    u32 window_scale; // game is scaled down by >>window_scale
     bool window_needs_resize;
-    f32 main_menu_bar_height_window_px;
-    GameParams params;
+    f32 main_menu_bar_height_window_px; // 'native' height of top menu bar; not scaled by window_scale
+    GameParams params; // last params used to start the game, reused when face clicked on
 } GameState;
 
 extern GameState game_state;

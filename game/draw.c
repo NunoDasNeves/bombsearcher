@@ -393,11 +393,11 @@ static void draw_borders()
     //log_error("(%u %u)", num_borders_x, num_borders_y);
     //log_error("%f", game_dims.y - border_orig.y);
     // offset to get to right border from left border
-    Vec2f offset_right = vec2f((num_borders_x - 1) * BORDER_PIXEL_WIDTH, 0);
+    Vec2f offset_right = vec2f((f32)((num_borders_x - 1) * BORDER_PIXEL_WIDTH), 0);
     // offset to get to mid border from top
     Vec2f offset_mid = vec2f(0, BORDER_PIXEL_HEIGHT + TOP_INTERIOR_HEIGHT);
     // offset to get to bottom border from top
-    Vec2f offset_bot = vec2f(0, (num_borders_y - 1) * BORDER_PIXEL_HEIGHT);
+    Vec2f offset_bot = vec2f(0, (f32)((num_borders_y - 1) * BORDER_PIXEL_HEIGHT));
     // top corners
     Vec2f pos_top_left = border_orig;
     Vec2f pos_top_right = vec2f_add(border_orig, offset_right);

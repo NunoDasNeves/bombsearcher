@@ -220,7 +220,7 @@ bool game_update_and_render(Input input)
 #ifdef DEBUG
     gui_FPS();
 #endif
-    gui_difficulty();
+    game_needs_restart = gui_difficulty(&game_state.params);
 
     mem_ctx_t mem_ctx = mem_set_context(MEM_CTX_SCRATCH);
     ASSERT(mem_scratch_scope_begin() == 1);

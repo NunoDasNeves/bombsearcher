@@ -48,8 +48,9 @@ void gui_FPS()
     ImGui::End();
 }
 
-void gui_difficulty()
+bool gui_difficulty(GameParams *params)
 {
+    bool ret = false;
     if (ImGui::BeginMainMenuBar())
     {
         ImVec2 window_dims = ImGui::GetWindowSize();
@@ -59,10 +60,21 @@ void gui_difficulty()
         if (ImGui::BeginMenu("Difficulty"))
         {
             // Create the menu options
-            if (ImGui::MenuItem("Easy")) {}
-            if (ImGui::MenuItem("Medium")) {}
-            if (ImGui::MenuItem("Hard")) {}
-            if (ImGui::MenuItem("Custom")) {}
+            if (ImGui::MenuItem("Easy")) {
+                *params = game_easy;
+                ret = true;
+            }
+            if (ImGui::MenuItem("Medium")) {
+                *params = game_medium;
+                ret = true;
+            }
+            if (ImGui::MenuItem("Hard")) {
+                *params = game_hard;
+                ret = true;
+            }
+            if (ImGui::MenuItem("Custom")) {
+                // TODO
+            }
 
             // End the "Difficulty" menubar menu
             ImGui::EndMenu();
@@ -71,6 +83,7 @@ void gui_difficulty()
         // End the menubar
         ImGui::EndMainMenuBar();
     }
+    return ret;
 }
 
 C_END

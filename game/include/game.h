@@ -156,7 +156,7 @@ static Vec2f face_pos_px()
 u32 resize_window_to_game();
 
 void gui_FPS();
-void gui_difficulty();
+bool gui_difficulty(GameParams *params);
 
 void draw_game();
 void draw_resize();

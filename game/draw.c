@@ -23,19 +23,34 @@ typedef struct {
     f32 tex[2];
 } Vertex;
 
+/*
+ * 6.7.2.2 Enumeration specifiers
+ * "
+ * If the first enumerator has no =, the value of its enumeration constant is 0.
+ * Each subsequent enumerator with no = defines its enumeration constant as the
+ * value of the constant expression obtained by adding 1 to the value of the
+ * previous enumeration constant.
+ * "
+ * i.e.
+ * No need to specify the first enum member as '= 0' if we just want the values to
+ * be 0, 1, 2...etc
+ * This is relevant to the below macros because there used to be a number specified,
+ * but turns out it's not needed
+ */
+
 /* macro magic! put all texture stuff here */
 #define TEXTURES(op) \
-    op("cell", CELL, 0) \
-    op("numbers", NUMBERS, 1) \
-    op("face", FACE, 2) \
-    op("border", BORDER, 3)
+    op("cell", CELL) \
+    op("numbers", NUMBERS) \
+    op("face", FACE) \
+    op("border", BORDER)
 
-#define TEX_ENUM(s, e, n) \
-    TEX_##e = n,
+#define TEX_ENUM(s, e) \
+    TEX_##e,
 
-/* e.g. TEX_GET(CELL_DOWN); */
+/* e.g. TEX_GET(CELL); */
 #define TEX_GET(e) \
-    textures[TEX_##e]
+    (textures[TEX_##e])
 
 enum {
     TEXTURES(TEX_ENUM)
@@ -55,8 +70,9 @@ bool __load_texture(const char *name, const char *path, u32 slot)
     }
     return true;
 }
-#define TEX_LOAD(s, e, n) \
+#define TEX_LOAD(s, e) \
     __load_texture(s, "assets/"s".png", TEX_##e);
+
 
 typedef struct {
     Texture *tex;

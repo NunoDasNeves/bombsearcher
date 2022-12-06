@@ -549,7 +549,7 @@ void draw_counter(u32 n, Vec2f pos)
     u32 i = 0;
     Sprite counter_spr = tex_to_sprite(TEX_GET(COUNTER));
     draw_sprite(&counter_spr, pos, vec2f(COUNTER_PIXEL_WIDTH, COUNTER_PIXEL_HEIGHT));
-    pos = vec2f_add(pos, vec2f(12, 12));
+    pos = vec2f_add(pos, vec2f(10, 10));
     pos = vec2f_add(pos, vec2f((NUM_7SEG_PIXEL_WIDTH + 2) * 2, 0));
     for (u32 i = 0; i < 3; ++i) {
         i64 digit = n % 10;

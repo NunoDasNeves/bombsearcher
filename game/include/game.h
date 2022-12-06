@@ -15,8 +15,13 @@ C_BEGIN
 #define FACE_PIXEL_HEIGHT FACE_PIXEL_WIDTH
 #define BORDER_PIXEL_WIDTH 16
 #define BORDER_PIXEL_HEIGHT BORDER_PIXEL_WIDTH
+#define NUM_7SEG_PIXEL_WIDTH 32
+#define NUM_7SEG_PIXEL_HEIGHT 64
+#define COUNTER_MAX 999
+#define COUNTER_PIXEL_WIDTH 120
+#define COUNTER_PIXEL_HEIGHT 84
 // interior height should be a multiple of BORDER_PIXEL_HEIGHT
-#define TOP_INTERIOR_HEIGHT ( (FACE_PIXEL_HEIGHT) + 20 + ((BORDER_PIXEL_HEIGHT) * 2) )
+#define TOP_INTERIOR_HEIGHT ( (FACE_PIXEL_HEIGHT) + 20 + (BORDER_PIXEL_HEIGHT) )
 
 typedef struct {
     u32 width;
@@ -143,12 +148,36 @@ static Vec2f cells_offset_px()
     );
 }
 
+static f32 top_interior_center_y_px()
+{
+    return (f32)(BORDER_PIXEL_HEIGHT + (TOP_INTERIOR_HEIGHT / 2) + (u32)menu_bar_y_offset_px());
+}
+
 static Vec2f face_pos_px()
 {
     Vec2f game_dims = game_dims_px();
     Vec2f pos = vec2f(
         (f32)(((u32)game_dims.x - FACE_PIXEL_WIDTH) >> 1), // i.e. window_width/2 - face_width/2
-        (f32)(BORDER_PIXEL_HEIGHT + ((TOP_INTERIOR_HEIGHT - FACE_PIXEL_HEIGHT) >> 1) + (u32)menu_bar_y_offset_px()) // i.e. border + top_interior/2 - face_height/2
+        top_interior_center_y_px() - (FACE_PIXEL_HEIGHT / 2)
+    );
+    return pos;
+}
+
+static Vec2f counter_bombs_pos_px()
+{
+    Vec2f pos = vec2f(
+        (f32)(BORDER_PIXEL_WIDTH * 2),
+        top_interior_center_y_px() - (COUNTER_PIXEL_HEIGHT / 2)
+    );
+    return pos;
+}
+
+static Vec2f counter_timer_pos_px()
+{
+    Vec2f game_dims = game_dims_px();
+    Vec2f pos = vec2f(
+        (f32)( (u32)game_dims.x - (BORDER_PIXEL_WIDTH * 2) - COUNTER_PIXEL_WIDTH ),
+        top_interior_center_y_px() - (COUNTER_PIXEL_HEIGHT / 2)
     );
     return pos;
 }

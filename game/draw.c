@@ -43,7 +43,9 @@ typedef struct {
     op("cell", CELL) \
     op("numbers", NUMBERS) \
     op("face", FACE) \
-    op("border", BORDER)
+    op("border", BORDER) \
+    op("counter", COUNTER) \
+    op("numbers_7seg", NUMBERS_7SEG)
 
 #define TEX_ENUM(s, e) \
     TEX_##e,
@@ -83,6 +85,18 @@ typedef struct {
     Vec2f dims;
 } Sprite;
 
+/* Simple way of getting a Sprite without using SpriteSheet */
+Sprite tex_to_sprite(Texture *tex)
+{
+    Sprite spr = {
+        tex,
+        {{0, 0}},
+        {{1, 1}},
+        {{tex->width, tex->height}}
+    };
+    return spr;
+}
+
 typedef struct {
     Texture *tex;
     Sprite *sprites;
@@ -96,7 +110,8 @@ typedef struct {
     op(CELL, CELL, 2, 2, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
     op(NUMBERS, NUMBERS, 8, 1, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
     op(FACE, FACE, 5, 2, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT) \
-    op(BORDER, BORDER, 4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT)
+    op(BORDER, BORDER, 4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT) \
+    op(NUMBERS_7SEG, NUMBERS_7SEG, 10, 1, NUM_7SEG_PIXEL_WIDTH, NUM_7SEG_PIXEL_HEIGHT)
 
 static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height);
 
@@ -104,6 +119,7 @@ void __init_spritesheet(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u3
 {
     if (!init_spritesheet_uniform(sheet, tex, cols, rows, spr_width, spr_height)) {
         log_error("Could not init cell sprite sheet");
+        ASSERT(1==0);
     }
 }
 
@@ -148,6 +164,10 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols,
 {
     ASSERT(sheet);
     ASSERT(tex);
+    ASSERT(cols > 0);
+    ASSERT(rows > 0);
+    ASSERT(spr_width > 0);
+    ASSERT(spr_height > 0);
 
     // TODO not sure if we need these, but whatevs
     i64 tex_x_excess = tex->width - cols * spr_width;
@@ -337,6 +357,9 @@ void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
 
 static void draw_sprite(Sprite *sprite, Vec2f pos, Vec2f dims)
 {
+    ASSERT(sprite);
+    ASSERT(sprite->tex);
+
     Geom geom;
 
     shader_set_texture(shader_flat, sprite->tex);
@@ -521,6 +544,31 @@ static void draw_borders(Board *board)
     }
 }
 
+void draw_counter(u32 n, Vec2f pos)
+{
+    u32 i = 0;
+    Sprite counter_spr = tex_to_sprite(TEX_GET(COUNTER));
+    draw_sprite(&counter_spr, pos, vec2f(COUNTER_PIXEL_WIDTH, COUNTER_PIXEL_HEIGHT));
+    pos = vec2f_add(pos, vec2f(12, 12));
+    pos = vec2f_add(pos, vec2f((NUM_7SEG_PIXEL_WIDTH + 2) * 2, 0));
+    for (u32 i = 0; i < 3; ++i) {
+        i64 digit = n % 10;
+        draw_sprite(SPRITEI(NUMBERS_7SEG, digit), pos, vec2f(NUM_7SEG_PIXEL_WIDTH, NUM_7SEG_PIXEL_HEIGHT));
+        pos = vec2f_sub(pos, vec2f(NUM_7SEG_PIXEL_WIDTH + 2, 0));
+        n /= 10;
+    }
+}
+
+void draw_counters()
+{
+    Board *board = &game_state.board;
+    // stop at 0, no negative numbers
+    i64 n = MAX(board->bombs_left, 0);
+    ASSERT(n < COUNTER_MAX);
+    draw_counter(n, counter_bombs_pos_px());
+    draw_counter(n, counter_timer_pos_px());
+}
+
 void draw_game()
 {
     render_start(background_color);
@@ -543,6 +591,7 @@ void draw_game()
     draw_cells(&game_state.board);
     draw_face();
     draw_borders(&game_state.board);
+    draw_counters();
 
     render_end();
 }

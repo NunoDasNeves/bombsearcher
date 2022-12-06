@@ -92,7 +92,7 @@ Sprite tex_to_sprite(Texture *tex)
         tex,
         {{0, 0}},
         {{1, 1}},
-        {{tex->width, tex->height}}
+        {{(f32)tex->width, (f32)tex->height}}
     };
     return spr;
 }
@@ -546,7 +546,6 @@ static void draw_borders(Board *board)
 
 void draw_counter(u32 n, Vec2f pos)
 {
-    u32 i = 0;
     Sprite counter_spr = tex_to_sprite(TEX_GET(COUNTER));
     draw_sprite(&counter_spr, pos, vec2f(COUNTER_PIXEL_WIDTH, COUNTER_PIXEL_HEIGHT));
     pos = vec2f_add(pos, vec2f(10, 10));
@@ -565,7 +564,7 @@ void draw_counters()
     // stop at 0, no negative numbers
     i64 n = MAX(board->bombs_left, 0);
     ASSERT(n < COUNTER_MAX);
-    draw_counter(n, counter_bombs_pos_px());
+    draw_counter((u32)n, counter_bombs_pos_px());
 
     u64 t = game_state.time_ms;
     if (t == UINT64_MAX) {
@@ -576,7 +575,7 @@ void draw_counters()
         t /= 1000;
         t = MIN(t, COUNTER_MAX);
     }
-    draw_counter(t, counter_timer_pos_px());
+    draw_counter((u32)t, counter_timer_pos_px());
 }
 
 void draw_game()

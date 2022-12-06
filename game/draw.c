@@ -91,10 +91,58 @@ typedef struct {
     u32 rows;
 } SpriteSheet;
 
-static SpriteSheet cell_sheet;
-static SpriteSheet numbers_sheet;
-static SpriteSheet face_sheet;
-static SpriteSheet border_sheet;
+// so far, name == tex_name, but maybe it won't always...?
+#define SPRITESHEETS(op) \
+    op(CELL, CELL, 2, 2, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
+    op(NUMBERS, NUMBERS, 8, 1, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
+    op(FACE, FACE, 5, 2, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT) \
+    op(BORDER, BORDER, 4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT)
+
+static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height);
+
+void __init_spritesheet(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
+{
+    if (!init_spritesheet_uniform(sheet, tex, cols, rows, spr_width, spr_height)) {
+        log_error("Could not init cell sprite sheet");
+    }
+}
+
+#define SPRSH_ENUM(name, tex_name, cols, rows, spr_width, spr_height) \
+    SPRSH_##name,
+
+enum {
+    SPRITESHEETS(SPRSH_ENUM)
+    SPRSH_NUM_SPRSHEETS
+};
+
+static SpriteSheet spritesheets[SPRSH_NUM_SPRSHEETS] = {0};
+
+#define SPRSH(name) \
+    (spritesheets[SPRSH_##name])
+
+#define SPRSH_LOAD(name, tex_name, cols, rows, spr_width, spr_height) \
+    __init_spritesheet(&SPRSH(name), TEX_GET(tex_name), cols, rows, spr_width, spr_height);
+
+static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
+{
+    ASSERT(sheet);
+    ASSERT(col < sheet->cols);
+    ASSERT(row < sheet->rows);
+
+    return &sheet->sprites[row * sheet->cols + col];
+}
+
+/*
+ * Little more succinct e.g.
+ * get_sprite(&SPRSH(CELL), 0, 0)
+ * vs
+ * SPRITE(CELL, 0, 0)
+ */
+#define SPRITE(spritesheet_name, col, row) \
+    get_sprite(&SPRSH(spritesheet_name), col, row)
+
+#define SPRITEI(spritesheet_name, idx) \
+    (&SPRSH(spritesheet_name).sprites[idx])
 
 static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
 {
@@ -300,14 +348,6 @@ static void draw_sprite(Sprite *sprite, Vec2f pos, Vec2f dims)
     geom_deinit(&geom);
 }
 
-static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
-{
-    ASSERT(sheet);
-    ASSERT(col < sheet->cols);
-    ASSERT(row < sheet->rows);
-    return &sheet->sprites[row * sheet->cols + col];
-}
-
 static Vec2f cell_pixel_pos(Board *board, Cell *cell)
 {
 
@@ -338,9 +378,9 @@ static void draw_cell_back(Board *board, Geom *geom, Cell *cell)
     i64 col, row;
     board_cell_to_pos(board, cell, &col, &row);
 
-    Sprite *spr = &cell_sheet.sprites[SPR_CELL_UP];
+    Sprite *spr = SPRITEI(CELL, SPR_CELL_UP);
     if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
-        spr = &cell_sheet.sprites[SPR_CELL_DOWN];
+        spr = &SPRSH(CELL).sprites[SPR_CELL_DOWN];
     }
     if (board->bomb_clicked == cell) {
         shader_set_color(shader_flat, color_red());
@@ -357,14 +397,14 @@ static void draw_cell_front(Board *board, Geom *geom, Cell *cell)
     ASSERT(geom);
     ASSERT(cell);
 
-    Sprite *spr = &cell_sheet.sprites[SPR_CELL_FLAG];
+    Sprite *spr = &SPRSH(CELL).sprites[SPR_CELL_FLAG];
     if (cell->state != CELL_FLAGGED) {
         if (cell->state == CELL_EXPLORED) {
             if (cell->is_bomb) {
-                spr = &cell_sheet.sprites[SPR_CELL_BOMB];
+                spr = &SPRSH(CELL).sprites[SPR_CELL_BOMB];
             } else if (cell->bombs_around > 0) {
                 ASSERT(cell->bombs_around <= 8);
-                spr = &numbers_sheet.sprites[cell->bombs_around - 1];
+                spr = &SPRSH(NUMBERS).sprites[cell->bombs_around - 1];
             } else {
                 return;
             }
@@ -401,10 +441,10 @@ static void draw_face()
         back_spr_idx = 1;
     }
 
-    Sprite *spr_back = get_sprite(&face_sheet, back_spr_idx, 1);
+    Sprite *spr_back = get_sprite(&SPRSH(FACE), back_spr_idx, 1);
     draw_sprite(spr_back, pos_back, spr_back->dims);
 
-    Sprite *spr_front = get_sprite(&face_sheet, game_state.face_state, 0);
+    Sprite *spr_front = get_sprite(&SPRSH(FACE), game_state.face_state, 0);
     draw_sprite(spr_front, pos_front, spr_front->dims);
 }
 
@@ -430,20 +470,20 @@ static void draw_borders(Board *board)
     // top corners
     Vec2f pos_top_left = border_orig;
     Vec2f pos_top_right = vec2f_add(border_orig, offset_right);
-    draw_sprite(get_sprite(&border_sheet, 0, 1), pos_top_left, spr_dims);
-    draw_sprite(get_sprite(&border_sheet, 1, 1), pos_top_right, spr_dims);
+    draw_sprite(get_sprite(&SPRSH(BORDER), 0, 1), pos_top_left, spr_dims);
+    draw_sprite(get_sprite(&SPRSH(BORDER), 1, 1), pos_top_right, spr_dims);
     // middle joins
     Vec2f pos_mid_left = vec2f_add(border_orig, offset_mid);
     Vec2f pos_mid_right = vec2f_add(pos_mid_left, offset_right);
-    draw_sprite(get_sprite(&border_sheet, 0, 2), pos_mid_left, spr_dims);
-    draw_sprite(get_sprite(&border_sheet, 1, 2), pos_mid_right, spr_dims);
+    draw_sprite(get_sprite(&SPRSH(BORDER), 0, 2), pos_mid_left, spr_dims);
+    draw_sprite(get_sprite(&SPRSH(BORDER), 1, 2), pos_mid_right, spr_dims);
     // bottom corners
     Vec2f pos_bot_left = vec2f_add(border_orig, offset_bot);
     Vec2f pos_bot_right = vec2f_add(pos_bot_left, offset_right);
-    draw_sprite(get_sprite(&border_sheet, 2, 1), pos_bot_left, spr_dims);
-    draw_sprite(get_sprite(&border_sheet, 3, 1), pos_bot_right, spr_dims);
+    draw_sprite(get_sprite(&SPRSH(BORDER), 2, 1), pos_bot_left, spr_dims);
+    draw_sprite(get_sprite(&SPRSH(BORDER), 3, 1), pos_bot_right, spr_dims);
     // vert
-    Sprite *spr_vert = get_sprite(&border_sheet, 0, 0);
+    Sprite *spr_vert = get_sprite(&SPRSH(BORDER), 0, 0);
     u32 num_borders_y_top = TOP_INTERIOR_HEIGHT / BORDER_PIXEL_HEIGHT;
     u32 num_borders_y_cells = (board->height * CELL_PIXEL_HEIGHT) / BORDER_PIXEL_HEIGHT;
     Vec2f pos_left = pos_top_left;
@@ -466,7 +506,7 @@ static void draw_borders(Board *board)
         draw_sprite(spr_vert, pos_right, spr_dims);
     }
     // horiz
-    Sprite *spr_horiz = get_sprite(&border_sheet, 1, 0);
+    Sprite *spr_horiz = get_sprite(&SPRSH(BORDER), 1, 0);
     u32 num_borders_x_interior = num_borders_x - 2;
     Vec2f pos_top = pos_top_left;
     Vec2f pos_mid = pos_mid_left;
@@ -544,27 +584,7 @@ void draw_end_game(Board *board)
 bool draw_init()
 {
     TEXTURES(TEX_LOAD);
-
-    if (!init_spritesheet_uniform(&cell_sheet, TEX_GET(CELL),
-                                  2, 2, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT)) {
-        log_error("Could not init cell sprite sheet");
-        return false;
-    }
-    if (!init_spritesheet_uniform(&numbers_sheet, TEX_GET(NUMBERS),
-                                  8, 1, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT)) {
-        log_error("Could not init numbers sprite sheet");
-        return false;
-    }
-    if (!init_spritesheet_uniform(&face_sheet, TEX_GET(FACE),
-                                  5, 2, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT)) {
-        log_error("Could not init face sprite sheet");
-        return false;
-    }
-    if (!init_spritesheet_uniform(&border_sheet, TEX_GET(BORDER),
-                                  4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT)) {
-        log_error("Could not init border sprite sheet");
-        return false;
-    }
+    SPRITESHEETS(SPRSH_LOAD);
 
     return true;
 }

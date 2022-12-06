@@ -566,7 +566,17 @@ void draw_counters()
     i64 n = MAX(board->bombs_left, 0);
     ASSERT(n < COUNTER_MAX);
     draw_counter(n, counter_bombs_pos_px());
-    draw_counter(n, counter_timer_pos_px());
+
+    u64 t = game_state.time_ms;
+    if (t == UINT64_MAX) {
+        t = 0;
+    } else {
+        ASSERT(t >= game_state.time_started_ms);
+        t -= game_state.time_started_ms;
+        t /= 1000;
+        t = MIN(t, COUNTER_MAX);
+    }
+    draw_counter(t, counter_timer_pos_px());
 }
 
 void draw_game()

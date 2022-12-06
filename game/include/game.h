@@ -107,7 +107,8 @@ typedef struct {
 typedef struct {
     Board board;
     Input last_input; // input from previous frame
-    u64 time_started;
+    u64 time_started_ms;
+    u64 time_ms;
     u8 face_state; // one of FACE_SMILE, FACE_SCARED, etc
     bool face_clicked;
     bool playing; // cells can be clicked on

@@ -180,6 +180,11 @@ void handle_input(Board *board, Input input)
             if (cell_under_mouse && game_state.playing) {
                 if (cell_under_mouse->state == CELL_UNEXPLORED) {
                     explore(board, cell_under_mouse);
+                    // start timer
+                    if (game_state.time_started_ms == UINT64_MAX) {
+                        game_state.time_started_ms = SDL_GetTicks64();
+                        game_state.time_ms = game_state.time_started_ms;
+                    }
                 }
                 break;
             }
@@ -243,6 +248,9 @@ bool game_update_and_render(Input input)
     }
 
     if (game_state.playing) {
+        if (game_state.time_started_ms != UINT64_MAX) {
+            game_state.time_ms = SDL_GetTicks64();
+        }
         // Switch FACE_SCARED back to smile by default
         game_state.face_state = FACE_SMILE;
     }
@@ -353,8 +361,8 @@ static bool game_start(GameParams params)
         log_error("Failed to init board");
         return false;
     }
-    // TODO start timer on click
-    game_state.time_started = SDL_GetTicks64();
+    game_state.time_started_ms = UINT64_MAX;
+    game_state.time_ms = UINT64_MAX;
     game_state.face_state = FACE_SMILE;
     game_state.playing = true;
     game_state.window_needs_resize = true;

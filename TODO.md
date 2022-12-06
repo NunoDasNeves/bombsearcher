@@ -1,7 +1,4 @@
 ## TODO
-- display bombs left
-- timer counting up as you play
-- display timer
 - custom game menu
 - optimize a bit - hard mode drops to 40fps on laptop
 - use longterm allocators for imgui
@@ -10,6 +7,9 @@
 - debug display key toggle
 
 ## DONE
+- display bombs left
+- timer counting up as you play
+- display timer
 - bug: after game ends, click on face and release elsewhere
 - make clicking on face retain same expression until release
 - start new game from Difficulty menu

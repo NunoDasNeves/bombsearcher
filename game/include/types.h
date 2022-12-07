@@ -28,6 +28,7 @@ C_BEGIN
 
 #define MAX(x,y) ((x) < (y) ? (y) : (x))
 #define MIN(x,y) ((x) > (y) ? (y) : (x))
+#define CLAMP(x,min,max) ( MIN (MAX( (x), (min) ), (max)) )
 
 #define KiB(x) (1024 * (x))
 #define MiB(x) (1024 * KiB(x))

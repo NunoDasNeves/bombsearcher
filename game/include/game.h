@@ -29,9 +29,16 @@ typedef struct {
     u32 num_bombs;
 } GameParams;
 
+#define PARAMS_MIN_WIDTH 6
+#define PARAMS_MIN_HEIGHT 6
+#define PARAMS_MIN_BOMBS 5
+#define PARAMS_MAX_WIDTH 31
+#define PARAMS_MAX_HEIGHT 31
+#define PARAMS_MAX_BOMBS COUNTER_MAX
 static const GameParams game_easy = { 9, 9, 10 };
 static const GameParams game_medium = { 16, 16, 40 };
 static const GameParams game_hard = { 30, 16, 99 };
+static const GameParams game_custom_default = { 6, 31, 42 };
 
 enum {
     CELL_UNEXPLORED = 0,

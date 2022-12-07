@@ -563,7 +563,7 @@ void draw_counters()
     Board *board = &game_state.board;
     // stop at 0, no negative numbers
     i64 n = MAX(board->bombs_left, 0);
-    ASSERT(n < COUNTER_MAX);
+    ASSERT(n <= COUNTER_MAX);
     draw_counter((u32)n, counter_bombs_pos_px());
 
     u64 t = game_state.time_ms;

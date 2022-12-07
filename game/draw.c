@@ -14,7 +14,6 @@ typedef struct {
 } Geom;
 
 Color background_color = COLOR_RGB8(153,153,153);
-Geom *cell_geoms;
 
 #define VERTEX_POS_ARRAY_ATTRIB 0
 #define VERTEX_TEX_ARRAY_ATTRIB 1
@@ -392,10 +391,9 @@ enum {
     SPR_CELL_BOMB = 3
 };
 
-static void draw_cell_back(Board *board, Geom *geom, Cell *cell)
+static void draw_cell_back(Board *board, Cell *cell)
 {
     ASSERT(board);
-    ASSERT(geom);
     ASSERT(cell);
 
     i64 col, row;
@@ -414,10 +412,9 @@ static void draw_cell_back(Board *board, Geom *geom, Cell *cell)
     draw_sprite(spr, cell_pixel_pos(board, cell), spr->dims);
 }
 
-static void draw_cell_front(Board *board, Geom *geom, Cell *cell)
+static void draw_cell_front(Board *board, Cell *cell)
 {
     ASSERT(board);
-    ASSERT(geom);
     ASSERT(cell);
 
     Sprite *spr = &SPRSH(CELL).sprites[SPR_CELL_FLAG];
@@ -443,10 +440,9 @@ static void draw_cell_front(Board *board, Geom *geom, Cell *cell)
 static void draw_cells(Board *board)
 {
     for(u32 i = 0; i < board->num_cells; ++i) {
-        Geom *geom = &cell_geoms[i];
         Cell *cell = &board->cells[i];
-        draw_cell_back(board, geom, cell);
-        draw_cell_front(board, geom, cell);
+        draw_cell_back(board, cell);
+        draw_cell_front(board, cell);
     }
 }
 
@@ -615,28 +611,12 @@ bool draw_start_game(Board* board)
 {
     ASSERT(board);
 
-    cell_geoms = mem_alloc(sizeof(Geom)*board->num_cells);
-    if (!cell_geoms) {
-        return false;
-    }
-    for (u32 i = 0; i < board->num_cells; ++i) {
-        geom_init(&cell_geoms[i]);
-    }
-
     return true;
 }
 
 void draw_end_game(Board *board)
 {
     ASSERT(board);
-    /*
-     * NOTE
-     * when this is first called, board->num_cells will be 0
-     * so this will safely do nothing
-     */
-    for (u32 i = 0; i < board->num_cells; ++i) {
-        geom_deinit(&cell_geoms[i]);
-    }
 }
 
 bool draw_init()

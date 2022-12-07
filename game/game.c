@@ -233,7 +233,7 @@ bool game_update_and_render(Input input)
  */
 #ifdef DEBUG
     if (show_debug) {
-        gui_FPS();
+        gui_debug();
     }
 #endif
     game_needs_restart = gui_difficulty(&game_state.params);

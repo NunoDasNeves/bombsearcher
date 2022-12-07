@@ -195,7 +195,7 @@ static Vec2f counter_timer_pos_px()
 
 u32 resize_window_to_game();
 
-void gui_FPS();
+void gui_debug();
 bool gui_difficulty(GameParams *params);
 
 void draw_game();

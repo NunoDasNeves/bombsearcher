@@ -209,8 +209,6 @@ static void *mem_alloc_bump(BumpAllocator *bump, u64 size,
         *b_footprint += size;
     }
 
-    log_debug("total allocated: %u", allocated);
-
     return ret;
 }
 

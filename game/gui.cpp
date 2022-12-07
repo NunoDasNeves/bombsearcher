@@ -2,6 +2,7 @@
 #include"imgui.h"
 #include"game.h"
 #include"log.h"
+#include"mem.h"
 
 /* 
  * Open ai chat wrote some of the code in this file...
@@ -20,8 +21,7 @@ const ImGuiWindowFlags gui_flags = ImGuiWindowFlags_NoDecoration |
                                    ImGuiWindowFlags_NoSavedSettings |
                                    ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-// Function to calculate the FPS and update the FPS counter
-void gui_FPS()
+void gui_debug()
 {
     fps_time += ImGui::GetIO().DeltaTime;
     fps_frames++;
@@ -32,17 +32,19 @@ void gui_FPS()
         fps_time = 0.0f;
         fps_frames = 0;
     }
-    // Start the FPS counter window
-    ImGui::Begin("FPS Counter", NULL, gui_flags | ImGuiWindowFlags_NoBackground);
 
-    // Set the window position
-    ImGui::SetWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 90, 15), ImGuiCond_Always);
-    ImGui::SetWindowSize(ImVec2(90, 20), ImGuiCond_Always);
+    u64 allocated, footprint;
+    mem_get_allocated(&allocated, &footprint);
 
-    // Display the FPS value
+    ImGui::Begin("Debug Diag", NULL, gui_flags);
+
+    ImGui::SetWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 150, 15), ImGuiCond_Always);
+    //ImGui::SetWindowSize(ImVec2(90, 20), ImGuiCond_Always);
+
     ImGui::Text("FPS: %.1f", last_fps);
 
-    // End the FPS counter window
+    ImGui::Text("Alloc: %lukB", allocated/1000);
+
     ImGui::End();
 }
 

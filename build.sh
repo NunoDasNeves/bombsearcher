@@ -13,9 +13,9 @@ GAME_CPP_SRCS=$(find "${GAME_DIR}" | grep -v "windows" | grep "\.cpp$")
 GAME_INCLUDE_DIRS="-I${GAME_DIR}/include -I${GLAD_DIR}/include -I${IMGUI_DIR} -I${IMGUI_DIR}/backends -I${STB_DIR} -I${SDL_INCLUDE_DIR}"
 
 OTHER_FLAGS="-DDEBUG -DTEST -DPLATFORM_GL_MAJOR_VERSION=3 -DPLATFORM_GL_MINOR_VERSION=3"
-COMPILER_FLAGS="-c -Wall -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -fPIC -g"
+COMPILER_FLAGS="-c -Wall -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable -fPIC -g -pg"
 
-LINKER_FLAGS="$(sdl2-config --libs --cflags) -ldl"
+LINKER_FLAGS="-pg $(sdl2-config --libs --cflags) -ldl"
 
 while [[ $# -gt 0 ]]; do
     case $1 in

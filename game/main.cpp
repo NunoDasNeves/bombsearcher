@@ -213,6 +213,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    //SDL_SetMemoryFunctions(mem_alloc, mem_calloc, mem_realloc, mem_free);
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO) < 0) {
         log_error("SDL couldn't be initialized - SDL_Error: %s", SDL_GetError());
         return EXIT_FAILURE;

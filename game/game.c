@@ -408,6 +408,9 @@ bool game_init()
     // Try and resize the window correctly before the first frame
     game_state.window_scale = resize_window_to_game();
 
+    // init is done, now use regular allocate by default
+    mem_set_context(MEM_CTX_LONGTERM);
+
     return true;
 }
 

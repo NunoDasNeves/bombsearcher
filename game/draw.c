@@ -321,6 +321,44 @@ static void geom_deinit(Geom *geom)
     dump_errors();
 }
 
+void get_sprite_verts_indices(Vec2f pos, Vec2f dims, Sprite *spr, Vertex *verts, GLuint *indices, GLuint index_offset)
+{
+    ASSERT(spr);
+    ASSERT(verts);
+    ASSERT(indices);
+
+    static const GLuint spr_indices[] = {
+        0,1,2,
+        3,2,1
+    };
+    for (u32 i = 0; i < ARRAY_LEN(spr_indices); ++i) {
+        indices[i] = spr_indices[i] + index_offset;
+    }
+
+    Vertex spr_verts[] = {
+        {
+            // top left
+            {pos.x, pos.y, 0},
+            {spr->pos_tx.x, spr->pos_tx.y}
+        }, {
+            // bottom left
+            {pos.x, pos.y + dims.y, 0},
+            {spr->pos_tx.x, spr->pos_tx.y + spr->dims_tx.y}
+        }, {
+            // top right
+            {pos.x + dims.x, pos.y, 0},
+            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y}
+        }, {
+            // bottom right
+            {pos.x + dims.x, pos.y + dims.y, 0},
+            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y + spr->dims_tx.y}
+        }
+    };
+    for (u32 i = 0; i < ARRAY_LEN(spr_verts); ++i) {
+        verts[i] = spr_verts[i];
+    }
+}
+
 void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
 {
     ASSERT(geom);
@@ -391,25 +429,17 @@ enum {
     SPR_CELL_BOMB = 3
 };
 
-static void draw_cell_back(Board *board, Cell *cell)
+static Sprite *spr_cell_back(Board *board, Cell *cell)
 {
     ASSERT(board);
     ASSERT(cell);
 
-    i64 col, row;
-    board_cell_to_pos(board, cell, &col, &row);
-
     Sprite *spr = SPRITEI(CELL, SPR_CELL_UP);
     if (cell->state == CELL_EXPLORED || cell->state == CELL_CLICKED) {
-        spr = &SPRSH(CELL).sprites[SPR_CELL_DOWN];
-    }
-    if (board->bomb_clicked == cell) {
-        shader_set_color(shader_flat, color_red());
-    } else {
-        shader_set_color(shader_flat, color_none());
+        spr = SPRITEI(CELL, SPR_CELL_DOWN);
     }
 
-    draw_sprite(spr, cell_pixel_pos(board, cell), spr->dims);
+    return spr;
 }
 
 static void draw_cell_front(Board *board, Cell *cell)
@@ -432,16 +462,59 @@ static void draw_cell_front(Board *board, Cell *cell)
             return;
         }
     }
-
-    shader_set_color(shader_flat, color_none());
+    Vec2f pos = cell_pixel_pos(board, cell);
+    if (board->bomb_clicked == cell) {
+        shader_set_color(shader_flat, color_red());
+        draw_sprite(SPRITEI(CELL, 0), cell_pixel_pos(board, cell), spr->dims);
+        shader_set_color(shader_flat, color_none());
+    }
     draw_sprite(spr, cell_pixel_pos(board, cell), spr->dims);
 }
 
 static void draw_cells(Board *board)
 {
-    for(u32 i = 0; i < board->num_cells; ++i) {
+    Geom geom;
+
+    Vertex *verts = mem_alloc(sizeof(Vertex) * 4 * board->num_cells);
+    if (!verts) {
+        log_error("Failed to alloc cell verts");
+        return;
+    }
+    GLuint *indices = mem_alloc(sizeof(GLuint) * 2 * 3 * board->num_cells);
+    if (!indices) {
+        log_error("Failed to alloc cell indices");
+        return;
+    }
+    Vertex *curr_verts = verts;
+    GLuint *curr_indices = indices;
+    u32 index_off = 0;
+    u32 num_tris = 0;
+    u32 num_verts = 0;
+    u32 num_indices = 0;
+
+    for (u32 i = 0; i < board->num_cells; ++i) {
         Cell *cell = &board->cells[i];
-        draw_cell_back(board, cell);
+        Vec2f pos = cell_pixel_pos(board, cell);
+        Sprite *spr_back = spr_cell_back(board, cell);
+        get_sprite_verts_indices(pos, spr_back->dims, spr_back, curr_verts, curr_indices, index_off);
+        curr_verts += 4;
+        num_verts += 4;
+        curr_indices += 6;
+        num_indices += 6;
+        index_off += 4;
+        num_tris += 2;
+    }
+
+    geom_init(&geom);
+    geom_load(&geom, verts, num_verts * sizeof(verts[0]), indices, num_indices * sizeof(indices[0]), num_tris);
+    shader_set_texture(shader_flat, TEX_GET(CELL));
+    glBindVertexArray(geom.vao);
+    glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
+                   GL_UNSIGNED_INT, 0); // offset
+    geom_deinit(&geom);
+
+    for (u32 i = 0; i < board->num_cells; ++i) {
+        Cell *cell = &board->cells[i];
         draw_cell_front(board, cell);
     }
 }

@@ -33,7 +33,7 @@ void gui_FPS()
         fps_frames = 0;
     }
     // Start the FPS counter window
-    ImGui::Begin("FPS Counter", NULL, gui_flags);
+    ImGui::Begin("FPS Counter", NULL, gui_flags | ImGuiWindowFlags_NoBackground);
 
     // Set the window position
     ImGui::SetWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 90, 15), ImGuiCond_Always);
@@ -60,39 +60,65 @@ bool gui_difficulty(GameParams *params)
     bool open_custom_popup = false;
     static GameParams custom_params = game_custom_default;
 
+    //ImGui::ShowStyleEditor();
+    static const ImVec4 dark_grey = ImVec4(0.54F, 0.54F, 0.54F, 1.0F);
+    static const ImVec4 mid_grey = ImVec4(0.65F, 0.65F, 0.65F, 1.0F);
+    static const ImVec4 light_grey = ImVec4(0.82F, 0.82F, 0.82F, 1.0F);
+    static const struct {
+        ImGuiCol idx;
+        ImVec4 col;
+    } style[] = {
+        {ImGuiCol_WindowBg, mid_grey},
+        {ImGuiCol_MenuBarBg, mid_grey},
+        {ImGuiCol_HeaderHovered, light_grey},
+        {ImGuiCol_PopupBg, mid_grey},
+        {ImGuiCol_Button, light_grey},
+        {ImGuiCol_ButtonHovered, light_grey},
+        {ImGuiCol_ButtonActive, dark_grey},
+        {ImGuiCol_Text, ImVec4(0,0,0,1)},
+        {ImGuiCol_TextSelectedBg, ImVec4(0.2f,0.3f,0.8f,0.5f)},
+        {ImGuiCol_FrameBg, ImVec4(1,1,1,1)},
+    };
+
+    for (u32 i = 0; i < ARRAY_LEN(style); ++i) {
+        ImGui::PushStyleColor(style[i].idx, style[i].col);
+    }
+
     if (ImGui::BeginPopupModal("CustomPopup", NULL, gui_flags)) {
 
-        ImVec2 display_size = ImGui::GetIO().DisplaySize;
-        ImGui::SetWindowPos(ImVec2(display_size.x/2, display_size.y/2), ImGuiCond_Always);
-        ImGui::SetWindowSize(ImVec2(150, 150), ImGuiCond_Always);
+        ImGui::SetWindowSize(ImVec2(183, 165), ImGuiCond_Always);
+        ImGui::SetWindowPos(ImVec2(25, 45), ImGuiCond_Always);
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(15,10));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(8,4));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20,20));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8,8));
+        ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1);
 
-          // unsigned int
-        ImGui::BeginGroup();
-        {
-            if (ImGui::InputScalar("width", ImGuiDataType_U32, &custom_params.width)) {
-                validate_params(&custom_params);
-            }
-            if (ImGui::InputScalar("height", ImGuiDataType_U32, &custom_params.height)) {
-                validate_params(&custom_params);
-            }
-            if (ImGui::InputScalar("bombs", ImGuiDataType_U32, &custom_params.num_bombs)) {
-                validate_params(&custom_params);
-            }
+        if (ImGui::InputScalar("width", ImGuiDataType_U32, &custom_params.width)) {
+            validate_params(&custom_params);
         }
-        ImGui::EndGroup();
-        ImGui::BeginGroup();
-        {
-            if (ImGui::Button("Begin")) {
-                validate_params(&custom_params);
-                *params = custom_params;
-                ret = true;
-                ImGui::CloseCurrentPopup();
-            }
-            if (ImGui::Button("Cancel")) {
-                ImGui::CloseCurrentPopup();
-            }
+        if (ImGui::InputScalar("height", ImGuiDataType_U32, &custom_params.height)) {
+            validate_params(&custom_params);
         }
-        ImGui::EndGroup();
+        if (ImGui::InputScalar("bombs", ImGuiDataType_U32, &custom_params.num_bombs)) {
+            validate_params(&custom_params);
+        }
+        if (ImGui::Button("Begin")) {
+            validate_params(&custom_params);
+            *params = custom_params;
+            ret = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel")) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar();
 
         ImGui::EndPopup();
     }
@@ -127,6 +153,10 @@ bool gui_difficulty(GameParams *params)
 
         // End the menubar
         ImGui::EndMainMenuBar();
+    }
+
+    for (u32 i = 0; i < ARRAY_LEN(style); ++i) {
+        ImGui::PopStyleColor();
     }
 
     if (open_custom_popup) {

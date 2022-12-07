@@ -109,6 +109,9 @@ typedef struct {
     u32 mouse_y;
     bool mouse_left_down;
     bool mouse_right_down;
+#ifdef DEBUG
+    bool debug_key;
+#endif
 } Input;
 
 typedef struct {

@@ -14,6 +14,9 @@
 GameState game_state;
 
 static bool game_needs_restart = false;
+#ifdef DEBUG
+static bool show_debug = false;
+#endif
 
 static bool game_start(GameParams params);
 
@@ -129,6 +132,12 @@ void handle_input(Board *board, Input input)
     Vec2f cells_offset = cells_offset_px();
     Input last_input = game_state.last_input;
 
+#ifdef DEBUG
+    if (!input.debug_key && last_input.debug_key) {
+        show_debug = !show_debug;
+    }
+#endif
+
     // convert window pixel coords to game pixel coords determined by scaling power
     input.mouse_x <<= game_state.window_scale;
     input.mouse_y <<= game_state.window_scale;
@@ -223,7 +232,9 @@ bool game_update_and_render(Input input)
  * (we could also hardcode the height, see start_game())
  */
 #ifdef DEBUG
-    gui_FPS();
+    if (show_debug) {
+        gui_FPS();
+    }
 #endif
     game_needs_restart = gui_difficulty(&game_state.params);
 

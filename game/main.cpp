@@ -95,7 +95,7 @@ u32 resize_window_to_game()
     return scale;
 }
 
-static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
+static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io, Input *input)
 {
     bool button_down = false;
 
@@ -156,6 +156,7 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
             break;
         }
         case SDL_KEYDOWN:
+        button_down = true;
         case SDL_KEYUP:
         {
             if (imgui_io.WantCaptureKeyboard) {
@@ -163,34 +164,34 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io)
             }
             SDL_Keycode keycode = e->key.keysym.sym;
             switch (keycode) {
-                case SDLK_r:
+#ifdef DEBUG
+                case SDLK_BACKQUOTE:
+                    input->debug_key = button_down;
                     break;
+#endif
             }
             break;
         }
     }
 }
 
-static Input poll_mouse(ImGuiIO& imgui_io)
+static void poll_mouse(ImGuiIO& imgui_io, Input *input)
 {
-    static Input input = {}; // static so we can use same input again if imgui takes control
     i32 window_pixel_x, window_pixel_y;
     u32 state;
 
     if (imgui_io.WantCaptureMouse) {
-        input.mouse_left_down = false;
-        input.mouse_right_down = false;
-        return input;
+        input->mouse_left_down = false;
+        input->mouse_right_down = false;
+        return;
     }
 
     state = SDL_GetMouseState(&window_pixel_x, &window_pixel_y);
 
-    input.mouse_left_down = state & SDL_BUTTON_LMASK;
-    input.mouse_right_down = state & SDL_BUTTON_RMASK;
-    input.mouse_x = (u32)window_pixel_x;
-    input.mouse_y = (u32)window_pixel_y;
-
-    return input;
+    input->mouse_left_down = state & SDL_BUTTON_LMASK;
+    input->mouse_right_down = state & SDL_BUTTON_RMASK;
+    input->mouse_x = (u32)window_pixel_x;
+    input->mouse_y = (u32)window_pixel_y;
 }
 
 int main(int argc, char **argv)
@@ -302,13 +303,14 @@ int main(int argc, char **argv)
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
+        static Input input = {}; // static so we can use same input again if imgui takes control
         bool imgui_used_event = false;
         while (SDL_PollEvent(&e))
         {
             imgui_used_event = ImGui_ImplSDL2_ProcessEvent(&e);
-            handle_event(window, &e, imgui_io);
+            handle_event(window, &e, imgui_io, &input);
         }
-        Input input = poll_mouse(imgui_io);
+        poll_mouse(imgui_io, &input);
 
         if (!game_update_and_render(input)) {
             keep_running = false;

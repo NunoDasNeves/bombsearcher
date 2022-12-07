@@ -1,12 +1,12 @@
 ## TODO
-- custom game menu
 - optimize a bit - hard mode drops to 40fps on laptop
 - use longterm allocators for imgui
 - use mem allocators for SDL
 - imgui window to display mem usage/footprint
-- debug display key toggle
 
 ## DONE
+- debug display key toggle
+- custom game menu
 - display bombs left
 - timer counting up as you play
 - display timer

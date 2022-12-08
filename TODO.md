@@ -1,10 +1,12 @@
 ## TODO
-- optimize a bit - hard mode drops to 40fps on laptop
+- optimize by drawing the cell fronts and borders in less draw calls
+- optimize by using texture array in shader instead of many bind texture calls
 - use longterm allocators for imgui
 - use mem allocators for SDL
-- imgui window to display mem usage/footprint
 
 ## DONE
+- optimize cell back drawing a bit (kinda jank)
+- imgui window to display mem usage/footprint
 - debug display key toggle
 - custom game menu
 - display bombs left

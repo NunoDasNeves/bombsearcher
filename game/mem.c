@@ -128,6 +128,24 @@ void *mem_alloc(u64 size)
     return NULL;
 }
 
+void *mem_calloc(u64 nmemb, u64 size)
+{
+    if (nmemb == 0 || size == 0) {
+        return NULL;
+    }
+    // overflow check
+    ASSERT(size <= UINT64_MAX/nmemb);
+
+    u64 sz = nmemb * size;
+    void *ret = mem_alloc(sz);
+    if (!ret) {
+        return NULL;
+    }
+    memset(ret, 0, sz);
+
+    return ret;
+}
+
 void *mem_alloc_aligned(u64 align, u64 size)
 {
     if (align < sizeof(void*) || !IS_POW_2(align)) {

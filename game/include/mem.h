@@ -118,7 +118,7 @@ void *mem_alloc_aligned(u64 alignment, u64 size);
 // alternative realloc() for stb library
 void *mem_realloc_sized(void *ptr, u64 oldsize, u64 newsize);
 // equivalent of calloc()
-//void *mem_calloc(u64 nmemb, u64 size);
+void *mem_calloc(u64 nmemb, u64 size);
 /*
  * equivalent of free()
  * does nothing in contexts MEM_SCRATCH, MEM_NOFREE

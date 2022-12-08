@@ -52,6 +52,21 @@ void shader_set_color(GLuint shader_id, Color color)
     dump_errors();
 }
 
+void shader_set_texture_array(GLuint shader_id,
+                              glTextureArray* texture_array)
+{
+    GLint loc;
+
+    glUseProgram(shader_id);
+
+    loc = glGetUniformLocation(shader_id, "texarr");
+    glUniform1i(loc, 1);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, texture_array->id);
+
+    dump_errors();
+}
+
 void shader_set_texture(GLuint shader_id,
                         glTexture* texture)
 {
@@ -180,6 +195,87 @@ static GLuint create_shader_program(const char *vertex_filename, const char* fra
     return program_id;
 }
 
+glTextureArray *create_texture_array(SpriteSheetImage* images, u32 count)
+{
+    glTextureArray *tex = mem_alloc(sizeof(glTextureArray));
+    if (!tex) {
+        log_error("Failed to alloc texture array");
+        return NULL;
+    }
+
+    u32 max_width = 0;
+    u32 max_height = 0;
+
+    tex->id = 0;
+    tex->num_layers = count;
+
+    for (u32 i = 0; i < count; ++i) {
+        if (images[i].width > max_width) {
+            max_width = images[i].width;
+        }
+        if (images[i].height > max_height) {
+            max_height = images[i].height;
+        }
+    }
+
+    tex->width = max_width;
+    tex->height = max_height;
+
+    void *empty_buf = mem_calloc(max_width * max_height, 4);
+
+    // Create and load texture
+    glGenTextures(1, &tex->id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, tex->id);
+
+    // Allocate storage
+    glTexImage3D(
+        GL_TEXTURE_2D_ARRAY,
+        0, // mipmap level
+        GL_RGBA8, // internal format
+        max_width, max_height,
+        count, // depth == number of layers
+        0, // border. has to be 0
+        GL_RGBA, GL_UNSIGNED_BYTE, // input format
+        NULL);
+
+    for (u32 i = 0; i < count; ++i) {
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
+                        0, 0, 0,
+                        i,
+                        max_width,
+                        max_height,
+                        1,
+                        GL_RGBA,
+                        GL_UNSIGNED_BYTE,
+                        empty_buf);
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
+                        0, 0, 0,
+                        i, // level == layer
+                        images[i].width,
+                        images[i].height,
+                        1, // depth == num layers
+                        GL_RGBA,
+                        GL_UNSIGNED_BYTE,
+                        images[i].data);
+        images[i].max_u = (f32)images[i].width/(f32)max_width;
+        images[i].max_v = (f32)images[i].height/(f32)max_height;
+        images[i].layer = i;
+    }
+    // we need to do this, even though we aren't using mipmaps
+    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+    dump_errors();
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    dump_errors();
+
+    return tex;
+}
+
 glTexture* create_texture(void* image_data, u32 width, u32 height)
 {
     glTexture* tex = pool_alloc(&texture_pool);
@@ -304,7 +400,6 @@ glTexture *load_texture(const char* filename)
 
     MEM_SCRATCH_START(mem_ctx);
 
-    // read in shader source
     image_data = image_file_read(filename, &size, &width, &height);
     if (image_data == NULL) {
         log_error("Failed to load texture \"%s\"", filename);

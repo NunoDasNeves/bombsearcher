@@ -47,9 +47,29 @@ typedef struct {
 extern glTexture *empty_texture;
 
 void shader_set_texture(GLuint shader_id, glTexture* texture);
+
+typedef struct {
+    GLuint id;
+    u32 height;
+    u32 width;
+    u32 num_layers;
+} glTextureArray;
+
+typedef struct {
+    u64 size;
+    u32 width;
+    u32 height;
+    u32 layer;
+    f32 max_u;
+    f32 max_v;
+    void *data;
+} SpriteSheetImage;
+
+void shader_set_texture_array(GLuint shader_id, glTextureArray* texture_array);
 void shader_set_color(GLuint shader_id, Color color);
 void shader_set_transform_pixels(GLuint shader_id, f32 width, f32 height);
 
+glTextureArray *create_texture_array(SpriteSheetImage* images, u32 count);
 glTexture *create_texture(void* image_data, u32 width, u32 height);
 glTexture *load_texture(const char* filename);
 

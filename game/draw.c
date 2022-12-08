@@ -5,6 +5,7 @@
 #include"game.h"
 #include"mem.h"
 #include"vec.h"
+#include"file.h"
 
 typedef struct {
     u32 num_tris;
@@ -74,6 +75,45 @@ bool __load_texture(const char *name, const char *path, u32 slot)
 #define TEX_LOAD(s, e) \
     __load_texture(s, "assets/"s".png", TEX_##e);
 
+
+/* macro magic! put all texture stuff here */
+#define SPRITESHEETIMAGES(op) \
+    op("cell", CELL) \
+    op("numbers", NUMBERS) \
+    op("face", FACE) \
+    op("border", BORDER) \
+    op("counter", COUNTER) \
+    op("numbers_7seg", NUMBERS_7SEG)
+
+#define SPRSHIMG_ENUM(s, e) \
+    SPRSHIMG_##e,
+
+#define SPRSHIMG_GET(e) \
+    (sprshimgs[SPRSHIMG_##e])
+
+enum {
+    SPRITESHEETIMAGES(SPRSHIMG_ENUM)
+    SPRSHIMG_NUM_SPRITESHEETIMAGES
+};
+
+static SpriteSheetImage sprshimgs[SPRSHIMG_NUM_SPRITESHEETIMAGES] = {0};
+static glTextureArray *tex_array;
+
+bool __load_sprshimg(const char *name, const char *filename, u32 slot)
+{
+    SpriteSheetImage *sprshimg = &sprshimgs[slot];
+
+    sprshimg->data = image_file_read(filename, &sprshimg->size, &sprshimg->width, &sprshimg->height);
+    if (sprshimg->data == NULL) {
+        log_error("Failed to load spritesheet image \"%s\"", name);
+        return false;
+    }
+
+    return true;
+}
+
+#define SPRSHIMG_LOAD(s, e) \
+    __load_sprshimg(s, "assets/"s".png", TEX_##e);
 
 typedef struct {
     glTexture *tex;
@@ -694,8 +734,12 @@ void draw_end_game(Board *board)
 
 bool draw_init()
 {
+
     TEXTURES(TEX_LOAD);
     SPRITESHEETS(SPRSH_LOAD);
+
+    SPRITESHEETIMAGES(SPRSHIMG_LOAD);
+    tex_array = create_texture_array(sprshimgs, ARRAY_LEN(sprshimgs));
 
     return true;
 }

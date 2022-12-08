@@ -27,13 +27,13 @@ static struct {
     // we need to bind a vao to draw the screen triangle...
     GLuint vao;
     GLuint shader;
-    Texture *texture; // framebuffer texture
+    glTexture *texture; // framebuffer texture
 } screen;
 
 GLuint shader_flat;
 
 // 1x1 white texture
-Texture *empty_texture;
+glTexture *empty_texture;
 
 static GLint gl_viewport_x = 0;
 static GLint gl_viewport_y = 0;
@@ -53,7 +53,7 @@ void shader_set_color(GLuint shader_id, Color color)
 }
 
 void shader_set_texture(GLuint shader_id,
-                        Texture* texture)
+                        glTexture* texture)
 {
     GLint loc;
 
@@ -180,9 +180,9 @@ static GLuint create_shader_program(const char *vertex_filename, const char* fra
     return program_id;
 }
 
-Texture* create_texture(void* image_data, u32 width, u32 height)
+glTexture* create_texture(void* image_data, u32 width, u32 height)
 {
-    Texture* tex = pool_alloc(&texture_pool);
+    glTexture* tex = pool_alloc(&texture_pool);
 
     if (tex == NULL) {
         return NULL;
@@ -230,9 +230,9 @@ Texture* create_texture(void* image_data, u32 width, u32 height)
     return tex;
 }
 
-static Texture* create_fb_texture(u32 width, u32 height)
+static glTexture* create_fb_texture(u32 width, u32 height)
 {
-    Texture* tex = create_texture(NULL, width, height);
+    glTexture* tex = create_texture(NULL, width, height);
     if (!tex) {
         return NULL;
     }
@@ -290,13 +290,13 @@ static Texture* create_fb_texture(u32 width, u32 height)
     return tex;
 }
 
-Texture *load_texture(const char* filename)
+glTexture *load_texture(const char* filename)
 {
     u64 size;
     mem_ctx_t mem_ctx;
     u32 width, height;
     unsigned char *image_data;
-    Texture *tex;
+    glTexture *tex;
 
     ASSERT(filename);
 
@@ -422,7 +422,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     mem_set_context(MEM_CTX_NOFREE);
 
     if (!pool_try_create(texture_pool, MAX_TEXTURES,
-                         Texture, mem_alloc)) {
+                         glTexture, mem_alloc)) {
         return false;
     }
 

@@ -58,7 +58,7 @@ enum {
     TEX_NUM_TEXTURES
 };
 
-Texture *textures[TEX_NUM_TEXTURES] = {0};
+glTexture *textures[TEX_NUM_TEXTURES] = {0};
 
 bool __load_texture(const char *name, const char *path, u32 slot)
 {
@@ -76,7 +76,7 @@ bool __load_texture(const char *name, const char *path, u32 slot)
 
 
 typedef struct {
-    Texture *tex;
+    glTexture *tex;
     /* Texture coords */
     Vec2f pos_tx;
     Vec2f dims_tx;
@@ -85,7 +85,7 @@ typedef struct {
 } Sprite;
 
 /* Simple way of getting a Sprite without using SpriteSheet */
-Sprite tex_to_sprite(Texture *tex)
+Sprite tex_to_sprite(glTexture *tex)
 {
     Sprite spr = {
         tex,
@@ -97,7 +97,7 @@ Sprite tex_to_sprite(Texture *tex)
 }
 
 typedef struct {
-    Texture *tex;
+    glTexture *tex;
     Sprite *sprites;
     u32 num_sprites;
     u32 cols;
@@ -112,9 +112,9 @@ typedef struct {
     op(BORDER, BORDER, 4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT) \
     op(NUMBERS_7SEG, NUMBERS_7SEG, 10, 1, NUM_7SEG_PIXEL_WIDTH, NUM_7SEG_PIXEL_HEIGHT)
 
-static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height);
+static bool init_spritesheet_uniform(SpriteSheet *sheet, glTexture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height);
 
-void __init_spritesheet(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
+void __init_spritesheet(SpriteSheet *sheet, glTexture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
 {
     if (!init_spritesheet_uniform(sheet, tex, cols, rows, spr_width, spr_height)) {
         log_error("Could not init cell sprite sheet");
@@ -159,7 +159,7 @@ static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
 #define SPRITEI(spritesheet_name, idx) \
     (&SPRSH(spritesheet_name).sprites[idx])
 
-static bool init_spritesheet_uniform(SpriteSheet *sheet, Texture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
+static bool init_spritesheet_uniform(SpriteSheet *sheet, glTexture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
 {
     ASSERT(sheet);
     ASSERT(tex);

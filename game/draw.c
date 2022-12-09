@@ -317,6 +317,7 @@ static void geom_init(Geom *geom)
     /* Enable the attributes for the current vao */
     glEnableVertexAttribArray(VERTEX_POS_ARRAY_ATTRIB);
     glEnableVertexAttribArray(VERTEX_TEX_ARRAY_ATTRIB);
+    glEnableVertexAttribArray(VERTEX_COLOR_ARRAY_ATTRIB);
     /* Binding the vbo lets us set the attribs for it */
     glBindBuffer(GL_ARRAY_BUFFER, geom->vbo);
     /*

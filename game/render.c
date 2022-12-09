@@ -253,14 +253,15 @@ glTextureArray *create_texture_array(SpriteSheetImage* images, u32 count)
                         GL_UNSIGNED_BYTE,
                         empty_buf);
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
-                        0, 0, 0,
+                        0,
+                        0, 0,
                         i,
-                        images[i].width,
-                        images[i].height,
+                        sprshimg->width,
+                        sprshimg->height,
                         1,
                         GL_RGBA,
                         GL_UNSIGNED_BYTE,
-                        images[i].data);
+                        sprshimg->data);
         sprshimg->max_u = (f32)sprshimg->width/(f32)max_width;
         sprshimg->max_v = (f32)sprshimg->height/(f32)max_height;
         sprshimg->layer = i;
@@ -279,6 +280,8 @@ glTextureArray *create_texture_array(SpriteSheetImage* images, u32 count)
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     dump_errors();
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
     return tex;
 }
@@ -534,7 +537,6 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     // create 1x1 white texture for default/untextured quads
     u8 buf[4] = {255, 255, 255, 255};
     empty_texture = create_texture(buf, 1, 1);
-    shader_set_texture(shader_flat, empty_texture);
 
     // texture for the screen triangle, size to the screen
     screen.texture = create_fb_texture(width, height);

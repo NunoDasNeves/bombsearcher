@@ -450,7 +450,7 @@ static Sprite *spr_cell_back(Board *board, Cell *cell)
     return spr;
 }
 
-static void draw_cell_front(Board *board, Cell *cell)
+static Sprite *spr_cell_front(Board *board, Cell *cell)
 {
     ASSERT(board);
     ASSERT(cell);
@@ -464,19 +464,13 @@ static void draw_cell_front(Board *board, Cell *cell)
                 ASSERT(cell->bombs_around <= 8);
                 spr = SPRITEI(NUMBERS, cell->bombs_around - 1);
             } else {
-                return;
+                return NULL;
             }
         } else {
-            return;
+            return NULL;
         }
     }
-    Vec2f pos = cell_pixel_pos(board, cell);
-    if (board->bomb_clicked == cell) {
-        shader_set_color(shader_flat, color_red());
-        draw_sprite(SPRITEI(CELL, 0), cell_pixel_pos(board, cell), spr->size_px);
-        shader_set_color(shader_flat, color_none());
-    }
-    draw_sprite(spr, cell_pixel_pos(board, cell), spr->size_px);
+    return spr;
 }
 
 static void draw_cells(Board *board)
@@ -520,10 +514,42 @@ static void draw_cells(Board *board)
                    GL_UNSIGNED_INT, 0); // offset
     geom_deinit(&geom);
 
+    // red bomb background
+    if (board->bomb_clicked != NULL) {
+        Sprite *spr = SPRITEI(CELL, 0);
+        shader_set_color(shader_flat, color_red());
+        draw_sprite(spr, cell_pixel_pos(board, board->bomb_clicked), spr->size_px);
+        shader_set_color(shader_flat, color_none());
+    }
+
+    curr_verts = verts;
+    curr_indices = indices;
+    index_off = 0;
+    num_tris = 0;
+    num_verts = 0;
+    num_indices = 0;
     for (u32 i = 0; i < board->num_cells; ++i) {
         Cell *cell = &board->cells[i];
-        draw_cell_front(board, cell);
+        Sprite *spr_front = spr_cell_front(board, cell);
+        if (!spr_front) {
+            continue;
+        }
+        Vec2f pos = cell_pixel_pos(board, cell);
+        get_sprite_verts_indices(pos, spr_front->size_px, spr_front, curr_verts, curr_indices, index_off);
+        curr_verts += 4;
+        num_verts += 4;
+        curr_indices += 6;
+        num_indices += 6;
+        index_off += 4;
+        num_tris += 2;
     }
+
+    geom_init(&geom);
+    geom_load(&geom, verts, num_verts * sizeof(verts[0]), indices, num_indices * sizeof(indices[0]), num_tris);
+    glBindVertexArray(geom.vao);
+    glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
+                   GL_UNSIGNED_INT, 0); // offset
+    geom_deinit(&geom);
 }
 
 static void draw_face()

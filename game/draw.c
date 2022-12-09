@@ -18,9 +18,11 @@ Color background_color = COLOR_RGB8(153,153,153);
 
 #define VERTEX_POS_ARRAY_ATTRIB 0
 #define VERTEX_TEX_ARRAY_ATTRIB 1
+#define VERTEX_COLOR_ARRAY_ATTRIB 2
 typedef struct {
     f32 pos[3];
-    f32 tex[2];
+    f32 tex[3];
+    f32 color[4];
 } Vertex;
 
 /*
@@ -39,6 +41,7 @@ typedef struct {
  */
 
 /* macro magic! put all texture stuff here */
+/*
 #define TEXTURES(op) \
     op("cell", CELL) \
     op("numbers", NUMBERS) \
@@ -50,7 +53,7 @@ typedef struct {
 #define TEX_ENUM(s, e) \
     TEX_##e,
 
-/* e.g. TEX_GET(CELL); */
+// e.g. TEX_GET(CELL);
 #define TEX_GET(e) \
     (textures[TEX_##e])
 
@@ -74,7 +77,7 @@ bool __load_texture(const char *name, const char *path, u32 slot)
 }
 #define TEX_LOAD(s, e) \
     __load_texture(s, "assets/"s".png", TEX_##e);
-
+*/
 
 /* macro magic! put all texture stuff here */
 #define SPRITESHEETIMAGES(op) \
@@ -82,14 +85,17 @@ bool __load_texture(const char *name, const char *path, u32 slot)
     op("numbers", NUMBERS) \
     op("face", FACE) \
     op("border", BORDER) \
-    op("counter", COUNTER) \
-    op("numbers_7seg", NUMBERS_7SEG)
+    op("numbers_7seg", NUMBERS_7SEG) \
+    op("counter", COUNTER)
 
 #define SPRSHIMG_ENUM(s, e) \
     SPRSHIMG_##e,
 
+#define SPRSHIMG_LOAD(s, e) \
+    __load_sprshimg(s, "assets/"s".png", SPRSHIMG_##e);
+
 #define SPRSHIMG_GET(e) \
-    (sprshimgs[SPRSHIMG_##e])
+    (&sprshimgs[SPRSHIMG_##e])
 
 enum {
     SPRITESHEETIMAGES(SPRSHIMG_ENUM)
@@ -103,42 +109,27 @@ bool __load_sprshimg(const char *name, const char *filename, u32 slot)
 {
     SpriteSheetImage *sprshimg = &sprshimgs[slot];
 
+    log_debug("Loading sprshimg \"%s\"", name);
     sprshimg->data = image_file_read(filename, &sprshimg->size, &sprshimg->width, &sprshimg->height);
     if (sprshimg->data == NULL) {
         log_error("Failed to load spritesheet image \"%s\"", name);
         return false;
     }
+    log_debug("Loaded sprshimg \"%s\", size %u, dims (%u %u)", name, sprshimg->size, sprshimg->width, sprshimg->height);
 
     return true;
 }
 
-#define SPRSHIMG_LOAD(s, e) \
-    __load_sprshimg(s, "assets/"s".png", TEX_##e);
-
 typedef struct {
-    glTexture *tex;
-    /* Texture coords */
-    Vec2f pos_tx;
-    Vec2f dims_tx;
-    /* Sprite dims */
-    Vec2f dims;
+    Vec2f uv_start;
+    Vec2f uv_size;
+    Vec2f size_px;
+    u32 layer;
 } Sprite;
 
-/* Simple way of getting a Sprite without using SpriteSheet */
-Sprite tex_to_sprite(glTexture *tex)
-{
-    Sprite spr = {
-        tex,
-        {{0, 0}},
-        {{1, 1}},
-        {{(f32)tex->width, (f32)tex->height}}
-    };
-    return spr;
-}
-
 typedef struct {
-    glTexture *tex;
     Sprite *sprites;
+    u32 layer;
     u32 num_sprites;
     u32 cols;
     u32 rows;
@@ -146,24 +137,21 @@ typedef struct {
 
 // so far, name == tex_name, but maybe it won't always...?
 #define SPRITESHEETS(op) \
-    op(CELL, CELL, 2, 2, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
-    op(NUMBERS, NUMBERS, 8, 1, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
-    op(FACE, FACE, 5, 2, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT) \
-    op(BORDER, BORDER, 4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT) \
-    op(NUMBERS_7SEG, NUMBERS_7SEG, 10, 1, NUM_7SEG_PIXEL_WIDTH, NUM_7SEG_PIXEL_HEIGHT)
+    op("cell", CELL, 2, 2, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
+    op("numbers", NUMBERS, 8, 1, CELL_PIXEL_WIDTH, CELL_PIXEL_HEIGHT) \
+    op("face", FACE, 5, 2, FACE_PIXEL_WIDTH, FACE_PIXEL_HEIGHT) \
+    op("border", BORDER, 4, 4, BORDER_PIXEL_WIDTH, BORDER_PIXEL_HEIGHT) \
+    op("numbers_7seg", NUMBERS_7SEG, 10, 1, NUM_7SEG_PIXEL_WIDTH, NUM_7SEG_PIXEL_HEIGHT) \
+    op("counter", COUNTER, 1, 1, COUNTER_PIXEL_WIDTH, COUNTER_PIXEL_HEIGHT)
 
-static bool init_spritesheet_uniform(SpriteSheet *sheet, glTexture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height);
+#define SPRSH_ENUM(name, enum_name, cols, rows, spr_width, spr_height) \
+    SPRSH_##enum_name,
 
-void __init_spritesheet(SpriteSheet *sheet, glTexture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
-{
-    if (!init_spritesheet_uniform(sheet, tex, cols, rows, spr_width, spr_height)) {
-        log_error("Could not init cell sprite sheet");
-        ASSERT(1==0);
-    }
-}
+#define SPRSH_LOAD(name, enum_name, cols, rows, spr_width, spr_height) \
+    __init_spritesheet(name, SPRSH_GET(enum_name), SPRSHIMG_GET(enum_name), cols, rows, spr_width, spr_height);
 
-#define SPRSH_ENUM(name, tex_name, cols, rows, spr_width, spr_height) \
-    SPRSH_##name,
+#define SPRSH_GET(name) \
+    (&spritesheets[SPRSH_##name])
 
 enum {
     SPRITESHEETS(SPRSH_ENUM)
@@ -172,11 +160,15 @@ enum {
 
 static SpriteSheet spritesheets[SPRSH_NUM_SPRSHEETS] = {0};
 
-#define SPRSH(name) \
-    (spritesheets[SPRSH_##name])
-
-#define SPRSH_LOAD(name, tex_name, cols, rows, spr_width, spr_height) \
-    __init_spritesheet(&SPRSH(name), TEX_GET(tex_name), cols, rows, spr_width, spr_height);
+static bool init_spritesheet_uniform(SpriteSheet *sheet, SpriteSheetImage *sprshimg, u32 cols, u32 rows, u32 spr_width, u32 spr_height);
+static void __init_spritesheet(const char* name, SpriteSheet *sheet, SpriteSheetImage *sprshimg,
+                               u32 cols, u32 rows, u32 spr_width, u32 spr_height)
+{
+    if (!init_spritesheet_uniform(sheet, sprshimg, cols, rows, spr_width, spr_height)) {
+        log_error("Could not init cell sprite sheet %s", name);
+        ASSERT(1==0);
+    }
+}
 
 static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
 {
@@ -194,34 +186,24 @@ static Sprite *get_sprite(SpriteSheet *sheet, u32 col, u32 row)
  * SPRITE(CELL, 0, 0)
  */
 #define SPRITE(spritesheet_name, col, row) \
-    get_sprite(&SPRSH(spritesheet_name), col, row)
+    get_sprite(SPRSH_GET(spritesheet_name), col, row)
 
 #define SPRITEI(spritesheet_name, idx) \
-    (&SPRSH(spritesheet_name).sprites[idx])
+    (&(SPRSH_GET(spritesheet_name)->sprites[idx]))
 
-static bool init_spritesheet_uniform(SpriteSheet *sheet, glTexture *tex, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
+static bool init_spritesheet_uniform(SpriteSheet *sheet, SpriteSheetImage *sprshimg, u32 cols, u32 rows, u32 spr_width, u32 spr_height)
 {
     ASSERT(sheet);
-    ASSERT(tex);
+    ASSERT(sprshimg);
     ASSERT(cols > 0);
     ASSERT(rows > 0);
     ASSERT(spr_width > 0);
     ASSERT(spr_height > 0);
+    ASSERT(sprshimg->width >= cols * spr_width);
+    ASSERT(sprshimg->height >= rows * spr_height);
+    ASSERT((u64)cols * (u64)rows < UINT32_MAX);
 
-    // TODO not sure if we need these, but whatevs
-    i64 tex_x_excess = tex->width - cols * spr_width;
-    i64 tex_y_excess = tex->height - rows * spr_height;
-
-    if (tex_x_excess < 0) {
-        log_error("Texture width %u insufficient for %u sprites of width %u", tex->width, cols, spr_width);
-        return false;
-    }
-    if (tex_y_excess < 0) {
-        log_error("Texture height %u insufficient for %u sprites of height %u", tex->height, rows, spr_height);
-        return false;
-    }
-
-    sheet->tex = tex;
+    sheet->layer = sprshimg->layer;
     sheet->sprites = NULL;
     sheet->num_sprites = cols * rows;
     sheet->cols = cols;
@@ -274,29 +256,32 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, glTexture *tex, u32 col
      * end_width_tx = spr_width_tx - pixel_width_tx
      * And the starting offset of the next sprite is start_offset_tx + spr_width_tx
      */
-    f32 spr_width_tx = (f32)spr_width / (f32)tex->width;
-    f32 px_width_tx = 1.0F / (f32)tex->width;
-    f32 x_off_tx = 0.5F/(f32)tex->width;
+    f32 spr_width_tx = sprshimg->max_u / (f32)cols;//(f32)spr_width / (f32)tex->width;
+    f32 px_width_tx = 1.0F / (f32)tex_array->width;//tex->width;
+    f32 x_off_tx = 0.5F/(f32)tex_array->width;
     f32 end_width_tx = spr_width_tx - px_width_tx;
 
-    f32 spr_height_tx = (f32)spr_height / (f32)tex->height;
-    f32 px_height_tx = 1.0F / (f32)tex->height;
-    f32 y_off_tx = 0.5F/(f32)tex->height;
+    f32 spr_height_tx = sprshimg->max_v / (f32)rows;//(f32)spr_height / (f32)tex->height;
+    f32 px_height_tx = 1.0F / (f32)tex_array->height;
+    f32 y_off_tx = 0.5F/(f32)tex_array->height;
     f32 end_height_tx = spr_height_tx - px_height_tx;
+
+    log_debug("sprshimg max_u %f", sprshimg->max_u);
+    log_debug("sprsh w %u spr_w %u max_w %u spr_w_tx %f x_off_tx %f", cols*spr_width, spr_width, tex_array->width, spr_width_tx, x_off_tx);
 
     u32 i = 0;
     for (u32 r = 0; r < rows; ++r) {
         for (u32 c = 0; c < cols; ++c) {
             Sprite *spr = &sheet->sprites[i++];
-            spr->tex = tex;
             // starting offset
-            spr->pos_tx.x = x_off_tx + (f32)c * spr_width_tx;
-            spr->pos_tx.y = y_off_tx + (f32)r * spr_height_tx;
+            spr->uv_start.x = x_off_tx + (f32)c * spr_width_tx;
+            spr->uv_start.y = y_off_tx + (f32)r * spr_height_tx;
             // width until midway through last pixel
-            spr->dims_tx.x = end_width_tx;
-            spr->dims_tx.y = end_height_tx;
-            spr->dims.x = (f32)spr_width;
-            spr->dims.y = (f32)spr_height;
+            spr->uv_size.x = end_width_tx;
+            spr->uv_size.y = end_height_tx;
+            spr->size_px.x = (f32)spr_width;
+            spr->size_px.y = (f32)spr_height;
+            spr->layer = sprshimg->layer;
         }
     }
 
@@ -338,16 +323,22 @@ static void geom_init(Geom *geom)
      * The attribs are set for the current vbo, and also
      * store the currently bound vbo in the vao
      */
+    Vertex v;
     glVertexAttribPointer(VERTEX_POS_ARRAY_ATTRIB,
-                          3, // number of floats in a vert
+                          ARRAY_LEN(v.pos), // number of floats in a vert
                           GL_FLOAT, GL_FALSE, // don't normalize
                           sizeof(Vertex), // stride
                           (void*)0);
     glVertexAttribPointer(VERTEX_TEX_ARRAY_ATTRIB,
-                          2, // number of floats in a texture coord
+                          ARRAY_LEN(v.tex), // number of floats in a texture coord
                           GL_FLOAT, GL_FALSE, // don't normalize
                           sizeof(Vertex), // stride
                           (void*)offsetof(Vertex, tex));
+    glVertexAttribPointer(VERTEX_COLOR_ARRAY_ATTRIB,
+                          ARRAY_LEN(v.color), // number of floats in a texture coord
+                          GL_FLOAT, GL_FALSE, // don't normalize
+                          sizeof(Vertex), // stride
+                          (void*)offsetof(Vertex, color));
     dump_errors();
 }
 
@@ -379,19 +370,19 @@ void get_sprite_verts_indices(Vec2f pos, Vec2f dims, Sprite *spr, Vertex *verts,
         {
             // top left
             {pos.x, pos.y, 0},
-            {spr->pos_tx.x, spr->pos_tx.y}
+            {spr->uv_start.x, spr->uv_start.y, spr->layer}
         }, {
             // bottom left
             {pos.x, pos.y + dims.y, 0},
-            {spr->pos_tx.x, spr->pos_tx.y + spr->dims_tx.y}
+            {spr->uv_start.x, spr->uv_start.y + spr->uv_size.y, spr->layer}
         }, {
             // top right
             {pos.x + dims.x, pos.y, 0},
-            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y}
+            {spr->uv_start.x + spr->uv_size.x, spr->uv_start.y, spr->layer}
         }, {
             // bottom right
             {pos.x + dims.x, pos.y + dims.y, 0},
-            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y + spr->dims_tx.y}
+            {spr->uv_start.x + spr->uv_size.x, spr->uv_start.y + spr->uv_size.y, spr->layer}
         }
     };
     for (u32 i = 0; i < ARRAY_LEN(spr_verts); ++i) {
@@ -399,49 +390,25 @@ void get_sprite_verts_indices(Vec2f pos, Vec2f dims, Sprite *spr, Vertex *verts,
     }
 }
 
-void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
+static void geom_load_sprite(Geom *geom, Vec2f pos, Vec2f dims, Sprite *spr)
 {
     ASSERT(geom);
     ASSERT(spr);
 
-    GLuint indices[] = {
-        0,1,2,
-        3,2,1
-    };
-
-    Vertex verts[] = {
-        {
-            // top left
-            {pos.x, pos.y, 0},
-            {spr->pos_tx.x, spr->pos_tx.y}
-        }, {
-            // bottom left
-            {pos.x, pos.y + dims.y, 0},
-            {spr->pos_tx.x, spr->pos_tx.y + spr->dims_tx.y}
-        }, {
-            // top right
-            {pos.x + dims.x, pos.y, 0},
-            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y}
-        }, {
-            // bottom right
-            {pos.x + dims.x, pos.y + dims.y, 0},
-            {spr->pos_tx.x + spr->dims_tx.x, spr->pos_tx.y + spr->dims_tx.y}
-        }
-    };
-
+    Vertex verts[4];
+    GLuint indices[6];
+    get_sprite_verts_indices(pos, dims, spr, verts, indices, 0);
     geom_load(geom, verts, sizeof(verts), indices, sizeof(indices), 2);
 }
 
 static void draw_sprite(Sprite *sprite, Vec2f pos, Vec2f dims)
 {
     ASSERT(sprite);
-    ASSERT(sprite->tex);
 
     Geom geom;
 
-    shader_set_texture(shader_flat, sprite->tex);
     geom_init(&geom);
-    geom_load_sprite(&geom, pos, sprite->dims, sprite);
+    geom_load_sprite(&geom, pos, dims, sprite);
     glBindVertexArray(geom.vao);
     glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
                    GL_UNSIGNED_INT, 0); // offset
@@ -487,14 +454,14 @@ static void draw_cell_front(Board *board, Cell *cell)
     ASSERT(board);
     ASSERT(cell);
 
-    Sprite *spr = &SPRSH(CELL).sprites[SPR_CELL_FLAG];
+    Sprite *spr = SPRITEI(CELL, SPR_CELL_FLAG);
     if (cell->state != CELL_FLAGGED) {
         if (cell->state == CELL_EXPLORED) {
             if (cell->is_bomb) {
-                spr = &SPRSH(CELL).sprites[SPR_CELL_BOMB];
+                spr = SPRITEI(CELL, SPR_CELL_BOMB);
             } else if (cell->bombs_around > 0) {
                 ASSERT(cell->bombs_around <= 8);
-                spr = &SPRSH(NUMBERS).sprites[cell->bombs_around - 1];
+                spr = SPRITEI(NUMBERS, cell->bombs_around - 1);
             } else {
                 return;
             }
@@ -505,10 +472,10 @@ static void draw_cell_front(Board *board, Cell *cell)
     Vec2f pos = cell_pixel_pos(board, cell);
     if (board->bomb_clicked == cell) {
         shader_set_color(shader_flat, color_red());
-        draw_sprite(SPRITEI(CELL, 0), cell_pixel_pos(board, cell), spr->dims);
+        draw_sprite(SPRITEI(CELL, 0), cell_pixel_pos(board, cell), spr->size_px);
         shader_set_color(shader_flat, color_none());
     }
-    draw_sprite(spr, cell_pixel_pos(board, cell), spr->dims);
+    draw_sprite(spr, cell_pixel_pos(board, cell), spr->size_px);
 }
 
 static void draw_cells(Board *board)
@@ -536,7 +503,7 @@ static void draw_cells(Board *board)
         Cell *cell = &board->cells[i];
         Vec2f pos = cell_pixel_pos(board, cell);
         Sprite *spr_back = spr_cell_back(board, cell);
-        get_sprite_verts_indices(pos, spr_back->dims, spr_back, curr_verts, curr_indices, index_off);
+        get_sprite_verts_indices(pos, spr_back->size_px, spr_back, curr_verts, curr_indices, index_off);
         curr_verts += 4;
         num_verts += 4;
         curr_indices += 6;
@@ -547,7 +514,6 @@ static void draw_cells(Board *board)
 
     geom_init(&geom);
     geom_load(&geom, verts, num_verts * sizeof(verts[0]), indices, num_indices * sizeof(indices[0]), num_tris);
-    shader_set_texture(shader_flat, TEX_GET(CELL));
     glBindVertexArray(geom.vao);
     glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
                    GL_UNSIGNED_INT, 0); // offset
@@ -573,11 +539,11 @@ static void draw_face()
         back_spr_idx = 1;
     }
 
-    Sprite *spr_back = get_sprite(&SPRSH(FACE), back_spr_idx, 1);
-    draw_sprite(spr_back, pos_back, spr_back->dims);
+    Sprite *spr_back = SPRITE(FACE, back_spr_idx, 1);
+    draw_sprite(spr_back, pos_back, spr_back->size_px);
 
-    Sprite *spr_front = get_sprite(&SPRSH(FACE), game_state.face_state, 0);
-    draw_sprite(spr_front, pos_front, spr_front->dims);
+    Sprite *spr_front = SPRITE(FACE, game_state.face_state, 0);
+    draw_sprite(spr_front, pos_front, spr_front->size_px);
 }
 
 static void draw_borders(Board *board)
@@ -602,20 +568,20 @@ static void draw_borders(Board *board)
     // top corners
     Vec2f pos_top_left = border_orig;
     Vec2f pos_top_right = vec2f_add(border_orig, offset_right);
-    draw_sprite(get_sprite(&SPRSH(BORDER), 0, 1), pos_top_left, spr_dims);
-    draw_sprite(get_sprite(&SPRSH(BORDER), 1, 1), pos_top_right, spr_dims);
+    draw_sprite(SPRITE(BORDER, 0, 1), pos_top_left, spr_dims);
+    draw_sprite(SPRITE(BORDER, 1, 1), pos_top_right, spr_dims);
     // middle joins
     Vec2f pos_mid_left = vec2f_add(border_orig, offset_mid);
     Vec2f pos_mid_right = vec2f_add(pos_mid_left, offset_right);
-    draw_sprite(get_sprite(&SPRSH(BORDER), 0, 2), pos_mid_left, spr_dims);
-    draw_sprite(get_sprite(&SPRSH(BORDER), 1, 2), pos_mid_right, spr_dims);
+    draw_sprite(SPRITE(BORDER, 0, 2), pos_mid_left, spr_dims);
+    draw_sprite(SPRITE(BORDER, 1, 2), pos_mid_right, spr_dims);
     // bottom corners
     Vec2f pos_bot_left = vec2f_add(border_orig, offset_bot);
     Vec2f pos_bot_right = vec2f_add(pos_bot_left, offset_right);
-    draw_sprite(get_sprite(&SPRSH(BORDER), 2, 1), pos_bot_left, spr_dims);
-    draw_sprite(get_sprite(&SPRSH(BORDER), 3, 1), pos_bot_right, spr_dims);
+    draw_sprite(SPRITE(BORDER, 2, 1), pos_bot_left, spr_dims);
+    draw_sprite(SPRITE(BORDER, 3, 1), pos_bot_right, spr_dims);
     // vert
-    Sprite *spr_vert = get_sprite(&SPRSH(BORDER), 0, 0);
+    Sprite *spr_vert = SPRITE(BORDER, 0, 0);
     u32 num_borders_y_top = TOP_INTERIOR_HEIGHT / BORDER_PIXEL_HEIGHT;
     u32 num_borders_y_cells = (board->height * CELL_PIXEL_HEIGHT) / BORDER_PIXEL_HEIGHT;
     Vec2f pos_left = pos_top_left;
@@ -638,7 +604,7 @@ static void draw_borders(Board *board)
         draw_sprite(spr_vert, pos_right, spr_dims);
     }
     // horiz
-    Sprite *spr_horiz = get_sprite(&SPRSH(BORDER), 1, 0);
+    Sprite *spr_horiz = SPRITE(BORDER, 1, 0);
     u32 num_borders_x_interior = num_borders_x - 2;
     Vec2f pos_top = pos_top_left;
     Vec2f pos_mid = pos_mid_left;
@@ -655,8 +621,7 @@ static void draw_borders(Board *board)
 
 void draw_counter(u32 n, Vec2f pos)
 {
-    Sprite counter_spr = tex_to_sprite(TEX_GET(COUNTER));
-    draw_sprite(&counter_spr, pos, vec2f(COUNTER_PIXEL_WIDTH, COUNTER_PIXEL_HEIGHT));
+    draw_sprite(SPRITEI(COUNTER, 0), pos, vec2f(COUNTER_PIXEL_WIDTH, COUNTER_PIXEL_HEIGHT));
     pos = vec2f_add(pos, vec2f(10, 10));
     pos = vec2f_add(pos, vec2f((NUM_7SEG_PIXEL_WIDTH + 2) * 2, 0));
     for (u32 i = 0; i < 3; ++i) {
@@ -706,6 +671,8 @@ void draw_game()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    shader_set_texture_array(shader_flat, tex_array);
+
     draw_cells(&game_state.board);
     draw_face();
     draw_borders(&game_state.board);
@@ -734,12 +701,9 @@ void draw_end_game(Board *board)
 
 bool draw_init()
 {
-
-    TEXTURES(TEX_LOAD);
-    SPRITESHEETS(SPRSH_LOAD);
-
     SPRITESHEETIMAGES(SPRSHIMG_LOAD);
     tex_array = create_texture_array(sprshimgs, ARRAY_LEN(sprshimgs));
+    SPRITESHEETS(SPRSH_LOAD);
 
     return true;
 }

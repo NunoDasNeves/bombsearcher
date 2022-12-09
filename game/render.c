@@ -61,9 +61,10 @@ void shader_set_texture_array(GLuint shader_id,
 
     loc = glGetUniformLocation(shader_id, "texarr");
     glUniform1i(loc, 1);
+    dump_errors();
     glActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, texture_array->id);
-
+    dump_errors();
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array->id);
     dump_errors();
 }
 
@@ -239,27 +240,33 @@ glTextureArray *create_texture_array(SpriteSheetImage* images, u32 count)
         NULL);
 
     for (u32 i = 0; i < count; ++i) {
+        SpriteSheetImage *sprshimg = &images[i];
+
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
-                        0, 0, 0,
-                        i,
+                        0, // mipmap level
+                        0, 0, // x y offset
+                        i, // z offset == layer
                         max_width,
                         max_height,
-                        1,
+                        1, // depth == num layers
                         GL_RGBA,
                         GL_UNSIGNED_BYTE,
                         empty_buf);
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY,
                         0, 0, 0,
-                        i, // level == layer
+                        i,
                         images[i].width,
                         images[i].height,
-                        1, // depth == num layers
+                        1,
                         GL_RGBA,
                         GL_UNSIGNED_BYTE,
                         images[i].data);
-        images[i].max_u = (f32)images[i].width/(f32)max_width;
-        images[i].max_v = (f32)images[i].height/(f32)max_height;
-        images[i].layer = i;
+        sprshimg->max_u = (f32)sprshimg->width/(f32)max_width;
+        sprshimg->max_v = (f32)sprshimg->height/(f32)max_height;
+        sprshimg->layer = i;
+        log_debug("Loading sprshimg to texture array");
+        log_debug("  dims (%u %u), max uvs (%f %f), layer %u",
+                  sprshimg->width, sprshimg->height, sprshimg->max_u, sprshimg->max_v, sprshimg->layer);
     }
     // we need to do this, even though we aren't using mipmaps
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);

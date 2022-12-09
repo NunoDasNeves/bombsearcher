@@ -266,8 +266,8 @@ static bool init_spritesheet_uniform(SpriteSheet *sheet, SpriteSheetImage *sprsh
     f32 y_off_tx = 0.5F/(f32)tex_array->height;
     f32 end_height_tx = spr_height_tx - px_height_tx;
 
-    log_debug("sprshimg max_u %f", sprshimg->max_u);
-    log_debug("sprsh w %u spr_w %u max_w %u spr_w_tx %f x_off_tx %f", cols*spr_width, spr_width, tex_array->width, spr_width_tx, x_off_tx);
+    //log_debug("sprshimg max_u %f", sprshimg->max_u);
+    //log_debug("sprsh w %u spr_w %u max_w %u spr_w_tx %f x_off_tx %f", cols*spr_width, spr_width, tex_array->width, spr_width_tx, x_off_tx);
 
     u32 i = 0;
     for (u32 r = 0; r < rows; ++r) {

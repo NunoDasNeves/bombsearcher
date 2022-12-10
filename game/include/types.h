@@ -52,6 +52,20 @@ typedef double f64;
 
 #define ARRAY_LEN(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+#define CHECK(expr, ret) \
+    do {    \
+        if (!(expr)) {  \
+            return (ret);   \
+        }   \
+    } while (0);
+
+#define CHECKV(expr) \
+    do {    \
+        if (!(expr)) {  \
+            return;   \
+        }   \
+    } while (0);
+
 #ifdef __GNUC__
 
 #define CLZ_U64(x) \

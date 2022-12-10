@@ -372,19 +372,19 @@ void get_sprite_verts_indices(Vec2f pos, Vec2f dims, Sprite *spr, Vertex *verts,
         {
             // top left
             {pos.x, pos.y, 0},
-            {spr->uv_start.x, spr->uv_start.y, spr->layer}
+            {spr->uv_start.x, spr->uv_start.y, (f32)spr->layer}
         }, {
             // bottom left
             {pos.x, pos.y + dims.y, 0},
-            {spr->uv_start.x, spr->uv_start.y + spr->uv_size.y, spr->layer}
+            {spr->uv_start.x, spr->uv_start.y + spr->uv_size.y, (f32)spr->layer}
         }, {
             // top right
             {pos.x + dims.x, pos.y, 0},
-            {spr->uv_start.x + spr->uv_size.x, spr->uv_start.y, spr->layer}
+            {spr->uv_start.x + spr->uv_size.x, spr->uv_start.y, (f32)spr->layer}
         }, {
             // bottom right
             {pos.x + dims.x, pos.y + dims.y, 0},
-            {spr->uv_start.x + spr->uv_size.x, spr->uv_start.y + spr->uv_size.y, spr->layer}
+            {spr->uv_start.x + spr->uv_size.x, spr->uv_start.y + spr->uv_size.y, (f32)spr->layer}
         }
     };
     for (u32 i = 0; i < ARRAY_LEN(spr_verts); ++i) {

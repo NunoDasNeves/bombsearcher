@@ -590,6 +590,7 @@ static void draw_borders(Board *board)
     // total border tiles in each direction
     u32 num_borders_x = (u32)(game_dims.x - border_orig.x)/BORDER_PIXEL_WIDTH;
     u32 num_borders_y = (u32)(game_dims.y - border_orig.y)/BORDER_PIXEL_HEIGHT;
+
     //log_error("(%u %u)", num_borders_x, num_borders_y);
     //log_error("%f", game_dims.y - border_orig.y);
     // offset to get to right border from left border
@@ -613,43 +614,64 @@ static void draw_borders(Board *board)
     Vec2f pos_bot_right = vec2f_add(pos_bot_left, offset_right);
     draw_sprite(SPRITE(BORDER, 2, 1), pos_bot_left, spr_dims);
     draw_sprite(SPRITE(BORDER, 3, 1), pos_bot_right, spr_dims);
+
+    // batch the rest up
+    Array sprites;
+    Array positions;
+    // just an estimate of size needed
+    CHECKV(try_alloc_array(sprites, num_borders_x * 3, Sprite*));
+    CHECKV(try_alloc_array(positions, num_borders_x * 3, Vec2f));
+
     // vert
     Sprite *spr_vert = SPRITE(BORDER, 0, 0);
     u32 num_borders_y_top = TOP_INTERIOR_HEIGHT / BORDER_PIXEL_HEIGHT;
     u32 num_borders_y_cells = (board->height * CELL_PIXEL_HEIGHT) / BORDER_PIXEL_HEIGHT;
-    Vec2f pos_left = pos_top_left;
-    Vec2f pos_right = vec2f_add(pos_left, offset_right);
+
+    // the sprites are all the same so just fill with what we need
+    array_fill(&sprites, &spr_vert, (num_borders_y_top + num_borders_y_cells) * 2);
+
+    Vec2f pos_vert[] = {
+                        pos_top_left,                           // left side
+                        vec2f_add(pos_top_left, offset_right)   // right side
+                       };
     for (u32 i = 0; i < num_borders_y_top; ++i) {
         // inc first to skip top row
-        pos_left.y += (f32)BORDER_PIXEL_HEIGHT;
-        pos_right.y += (f32)BORDER_PIXEL_HEIGHT;
-        draw_sprite(spr_vert, pos_left, spr_dims);
-        draw_sprite(spr_vert, pos_right, spr_dims);
+        pos_vert[0].y += (f32)BORDER_PIXEL_HEIGHT;
+        pos_vert[1].y += (f32)BORDER_PIXEL_HEIGHT;
+
+        array_append(&positions, pos_vert, 2);
     }
     // skip middle joins
-    pos_left.y += (f32)BORDER_PIXEL_HEIGHT;
-    pos_right.y += (f32)BORDER_PIXEL_HEIGHT;
+    pos_vert[0].y += (f32)BORDER_PIXEL_HEIGHT;
+    pos_vert[1].y += (f32)BORDER_PIXEL_HEIGHT;
     for (u32 i = 0; i < num_borders_y_cells; ++i) {
         // inc first to skip top row
-        pos_left.y += (f32)BORDER_PIXEL_HEIGHT;
-        pos_right.y += (f32)BORDER_PIXEL_HEIGHT;
-        draw_sprite(spr_vert, pos_left, spr_dims);
-        draw_sprite(spr_vert, pos_right, spr_dims);
+        pos_vert[0].y += (f32)BORDER_PIXEL_HEIGHT;
+        pos_vert[1].y += (f32)BORDER_PIXEL_HEIGHT;
+        array_append(&positions, pos_vert, 2);
     }
+
+    draw_sprite_array(&sprites, &positions);
+
     // horiz
     Sprite *spr_horiz = SPRITE(BORDER, 1, 0);
     u32 num_borders_x_interior = num_borders_x - 2;
-    Vec2f pos_top = pos_top_left;
-    Vec2f pos_mid = pos_mid_left;
-    Vec2f pos_bot = pos_bot_left;
+    array_clear(&positions);
+    array_fill(&sprites, &spr_horiz, num_borders_x_interior * 3);
+
+    Vec2f pos_horiz[] = {
+                        pos_top_left, // top
+                        pos_mid_left, // mid
+                        pos_bot_left  // bot
+                      };
     for (u32 i = 0; i < num_borders_x_interior; ++i) {
-        pos_top.x += (f32)BORDER_PIXEL_WIDTH;
-        pos_mid.x += (f32)BORDER_PIXEL_WIDTH;
-        pos_bot.x += (f32)BORDER_PIXEL_WIDTH;
-        draw_sprite(spr_horiz, pos_top, spr_dims);
-        draw_sprite(spr_horiz, pos_mid, spr_dims);
-        draw_sprite(spr_horiz, pos_bot, spr_dims);
+        pos_horiz[0].x += (f32)BORDER_PIXEL_WIDTH;
+        pos_horiz[1].x += (f32)BORDER_PIXEL_WIDTH;
+        pos_horiz[2].x += (f32)BORDER_PIXEL_WIDTH;
+        array_append(&positions, pos_horiz, 3);
     }
+
+    draw_sprite_array(&sprites, &positions);
 }
 
 void draw_counter(u32 n, Vec2f pos)

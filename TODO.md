@@ -1,10 +1,10 @@
 ## TODO
-- optimize by drawing the cell fronts and borders in less draw calls
-- optimize by using texture array in shader instead of many bind texture calls
 - use longterm allocators for imgui
 - use mem allocators for SDL
 
 ## DONE
+- optimize by drawing the cell fronts and borders in less draw calls
+- optimize by using texture array in shader instead of many bind texture calls
 - optimize cell back drawing a bit (kinda jank)
 - imgui window to display mem usage/footprint
 - debug display key toggle

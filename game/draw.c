@@ -6,6 +6,7 @@
 #include"mem.h"
 #include"vec.h"
 #include"file.h"
+#include"array.h"
 
 typedef struct {
     u32 num_tris;
@@ -473,16 +474,14 @@ static Sprite *spr_cell_front(Board *board, Cell *cell)
     return spr;
 }
 
-static void draw_cells(Board *board)
+static void draw_sprite_array(Array *sprites, Array *positions)
 {
-    Geom geom;
-
-    Vertex *verts = mem_alloc(sizeof(Vertex) * 4 * board->num_cells);
+    Vertex *verts = mem_alloc(sizeof(Vertex) * sprites->len * 4);
     if (!verts) {
         log_error("Failed to alloc cell verts");
         return;
     }
-    GLuint *indices = mem_alloc(sizeof(GLuint) * 2 * 3 * board->num_cells);
+    GLuint *indices = mem_alloc(sizeof(GLuint) * sprites->len * 2 * 3);
     if (!indices) {
         log_error("Failed to alloc cell indices");
         return;
@@ -494,11 +493,10 @@ static void draw_cells(Board *board)
     u32 num_verts = 0;
     u32 num_indices = 0;
 
-    for (u32 i = 0; i < board->num_cells; ++i) {
-        Cell *cell = &board->cells[i];
-        Vec2f pos = cell_pixel_pos(board, cell);
-        Sprite *spr_back = spr_cell_back(board, cell);
-        get_sprite_verts_indices(pos, spr_back->size_px, spr_back, curr_verts, curr_indices, index_off);
+    for (u32 i = 0; i < sprites->len; ++i) {
+        Sprite *spr = ((Sprite **)sprites->data)[i];
+        Vec2f pos = ((Vec2f *)positions->data)[i];
+        get_sprite_verts_indices(pos, spr->size_px, spr, curr_verts, curr_indices, index_off);
         curr_verts += 4;
         num_verts += 4;
         curr_indices += 6;
@@ -507,12 +505,33 @@ static void draw_cells(Board *board)
         num_tris += 2;
     }
 
+    Geom geom;
+
     geom_init(&geom);
     geom_load(&geom, verts, num_verts * sizeof(verts[0]), indices, num_indices * sizeof(indices[0]), num_tris);
     glBindVertexArray(geom.vao);
     glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
                    GL_UNSIGNED_INT, 0); // offset
     geom_deinit(&geom);
+}
+
+static void draw_cells(Board *board)
+{
+    Geom geom;
+
+    Array sprites;
+    Array positions;
+
+    CHECKV(try_alloc_array(sprites, board->num_cells, Sprite*));
+    CHECKV(try_alloc_array(positions, board->num_cells, Vec2f));
+
+    for (u32 i = 0; i < board->num_cells; ++i) {
+        Cell *cell = &board->cells[i];
+        Vec2f pos = cell_pixel_pos(board, cell);
+        Sprite *spr = spr_cell_back(board, cell);
+        array_append(&sprites, &spr, 1);
+        array_append(&positions, &pos, 1);
+    }
 
     // red bomb background
     if (board->bomb_clicked != NULL) {
@@ -522,12 +541,25 @@ static void draw_cells(Board *board)
         shader_set_color(shader_flat, color_none());
     }
 
-    curr_verts = verts;
-    curr_indices = indices;
-    index_off = 0;
-    num_tris = 0;
-    num_verts = 0;
-    num_indices = 0;
+    draw_sprite_array(&sprites, &positions);
+
+    Vertex *verts = mem_alloc(sizeof(Vertex) * board->num_cells * 4);
+    if (!verts) {
+        log_error("Failed to alloc cell verts");
+        return;
+    }
+    GLuint *indices = mem_alloc(sizeof(GLuint) * board->num_cells * 2 * 3);
+    if (!indices) {
+        log_error("Failed to alloc cell indices");
+        return;
+    }
+    Vertex *curr_verts = verts;
+    GLuint *curr_indices = indices;
+    u32 index_off = 0;
+    u32 num_tris = 0;
+    u32 num_verts = 0;
+    u32 num_indices = 0;
+
     for (u32 i = 0; i < board->num_cells; ++i) {
         Cell *cell = &board->cells[i];
         Sprite *spr_front = spr_cell_front(board, cell);

@@ -517,8 +517,6 @@ static void draw_sprite_array(Array *sprites, Array *positions)
 
 static void draw_cells(Board *board)
 {
-    Geom geom;
-
     Array sprites;
     Array positions;
 
@@ -533,6 +531,11 @@ static void draw_cells(Board *board)
         array_append(&positions, &pos, 1);
     }
 
+    draw_sprite_array(&sprites, &positions);
+
+    array_clear(&sprites);
+    array_clear(&positions);
+
     // red bomb background
     if (board->bomb_clicked != NULL) {
         Sprite *spr = SPRITEI(CELL, 0);
@@ -541,47 +544,18 @@ static void draw_cells(Board *board)
         shader_set_color(shader_flat, color_none());
     }
 
-    draw_sprite_array(&sprites, &positions);
-
-    Vertex *verts = mem_alloc(sizeof(Vertex) * board->num_cells * 4);
-    if (!verts) {
-        log_error("Failed to alloc cell verts");
-        return;
-    }
-    GLuint *indices = mem_alloc(sizeof(GLuint) * board->num_cells * 2 * 3);
-    if (!indices) {
-        log_error("Failed to alloc cell indices");
-        return;
-    }
-    Vertex *curr_verts = verts;
-    GLuint *curr_indices = indices;
-    u32 index_off = 0;
-    u32 num_tris = 0;
-    u32 num_verts = 0;
-    u32 num_indices = 0;
-
     for (u32 i = 0; i < board->num_cells; ++i) {
         Cell *cell = &board->cells[i];
-        Sprite *spr_front = spr_cell_front(board, cell);
-        if (!spr_front) {
+        Sprite *spr = spr_cell_front(board, cell);
+        if (!spr) {
             continue;
         }
         Vec2f pos = cell_pixel_pos(board, cell);
-        get_sprite_verts_indices(pos, spr_front->size_px, spr_front, curr_verts, curr_indices, index_off);
-        curr_verts += 4;
-        num_verts += 4;
-        curr_indices += 6;
-        num_indices += 6;
-        index_off += 4;
-        num_tris += 2;
+        array_append(&sprites, &spr, 1);
+        array_append(&positions, &pos, 1);
     }
 
-    geom_init(&geom);
-    geom_load(&geom, verts, num_verts * sizeof(verts[0]), indices, num_indices * sizeof(indices[0]), num_tris);
-    glBindVertexArray(geom.vao);
-    glDrawElements(GL_TRIANGLES, geom.num_tris * 3, // num indices
-                   GL_UNSIGNED_INT, 0); // offset
-    geom_deinit(&geom);
+    draw_sprite_array(&sprites, &positions);
 }
 
 static void draw_face()

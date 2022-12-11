@@ -256,6 +256,7 @@ int main(int argc, char **argv)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& imgui_io = ImGui::GetIO();
+    imgui_io.IniFilename = NULL; // don't save settings!
     ImGui::StyleColorsDark();
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
 

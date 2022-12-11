@@ -315,7 +315,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     srand((unsigned int)time(NULL));
 
     while (bombs_left > 0 && iters > 0) {
-        u32 idx = (u32)(((f32)rand()/(f32)(RAND_MAX + 1)) * (f32)num_cells);
+        u32 idx = (u32)(((f32)rand()/(f32)RAND_MAX) * (f32)(num_cells - 1));
         Cell *cell = &board->cells[idx];
         iters--;
         if (cell->is_bomb) {

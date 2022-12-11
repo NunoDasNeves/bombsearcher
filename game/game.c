@@ -239,7 +239,7 @@ bool game_update_and_render(Input input)
     game_needs_restart = gui_difficulty(&game_state.params);
 
     mem_ctx_t mem_ctx = mem_set_context(MEM_CTX_SCRATCH);
-    ASSERT(mem_scratch_scope_begin() == 1);
+    CHECK_LOG(mem_scratch_scope_begin() == 1, true, "unexpected mem scratch scope");
 
     // TODO maybe have special calibration function to do all this
     // janky resizing stuff that needs to happen after some stuff
@@ -272,7 +272,7 @@ bool game_update_and_render(Input input)
     draw_game();
     game_state.last_input = input;
 
-    ASSERT(mem_scratch_scope_end() == 0);
+    CHECK_LOG(mem_scratch_scope_end() == 0, true, "unexpected mem scratch scope");
 
     if (game_needs_restart) {
         game_needs_restart = false;
@@ -377,8 +377,9 @@ static bool game_start(GameParams params)
      */
     draw_end_game(board);
     // end all the scopes
-    ASSERT(mem_scratch_scope_end() == -1);
-    ASSERT(mem_scratch_scope_begin() == 0);
+
+    CHECK_LOG(mem_scratch_scope_end() == -1, false, "unexpected mem scratch scope");
+    CHECK_LOG(mem_scratch_scope_begin() == 0, false, "unexpected mem scratch scope");
 
     if (!board_init(board, params.width, params.height, params.num_bombs)) {
         log_error("Failed to init board");

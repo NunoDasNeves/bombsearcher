@@ -20,7 +20,7 @@ C_BEGIN
 #ifdef DEBUG
 #define ASSERT(_EXP) assert(_EXP)
 #else
-#define ASSERT(_EXP) (_EXP)
+#define ASSERT(_EXP)
 #endif
 
 #define STRINGIFY(X) #X

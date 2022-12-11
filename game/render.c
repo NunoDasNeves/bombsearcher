@@ -505,7 +505,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
     }
 
     mem_set_context(MEM_CTX_SCRATCH);
-    ASSERT(mem_scratch_scope_begin() == 0);
+    CHECK_LOG(mem_scratch_scope_begin() == 0, false, "unexpected mem scratch scope");
 
     screen.shader = create_shader_program("shaders/screen.vert", "shaders/screen.frag");
     if (!screen.shader) {
@@ -523,7 +523,7 @@ bool render_init(GLADloadproc gl_get_proc_address, u32 width, u32 height)
         return false;
     }
 
-    ASSERT(mem_scratch_scope_end() == -1);
+    CHECK_LOG(mem_scratch_scope_end() == -1, false, "unexpected mem scratch scope");
     mem_set_context(MEM_CTX_NOFREE);
 
     if (!pool_try_create(texture_pool, MAX_TEXTURES,

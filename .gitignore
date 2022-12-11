@@ -1,6 +1,8 @@
 BombSearcher.exe
 BombSearcher
 build
+out
+gmon.out
 *.swp
 *.so
 *.ini

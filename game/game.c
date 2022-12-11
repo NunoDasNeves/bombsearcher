@@ -310,12 +310,23 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
     i32 bombs_left = num_bombs;
     ASSERT((u32)bombs_left < num_cells);
 
-    i64 iters = 1 << 30;
-    // TODO replace c srand() and rand()
-    srand((unsigned int)time(NULL));
+    i64 max_iters = 1 << 20;
+    i64 iters = max_iters;
+
+    // to generate random numbers we'll mask out the unneeded bits from a call to rand()
+    u32 mask = (1 << (32 - ((u32)CLZ_U64(num_cells) - 32))) - 1;
+    ASSERT(num_cells < RAND_MAX); // otherwise we can't use this method...
+    log_debug("num_cells 0x%x", num_cells);
+    log_debug("mask 0x%x", mask);
 
     while (bombs_left > 0 && iters > 0) {
-        u32 idx = (u32)(((f32)rand()/(f32)RAND_MAX) * (f32)(num_cells - 1));
+        u32 rand_bits = num_cells;
+        while (rand_bits >= num_cells) {
+            u32 rand_num = (u32)rand();
+            rand_bits = rand_num & mask;
+        }
+        // now we have random bits which represent a number less than num_cells
+        u32 idx = rand_bits;
         Cell *cell = &board->cells[idx];
         iters--;
         if (cell->is_bomb) {
@@ -344,6 +355,7 @@ static bool board_init(Board *board, u32 width, u32 height, u32 num_bombs)
             }
         }
     }
+    log_debug("Used %ld iters", max_iters - iters);
 
     if (iters <= 0) {
         log_error("Failed to place bombs - RNG is broken!");
@@ -397,6 +409,9 @@ bool game_init()
         log_error("Failed to init draw");
         return false;
     }
+
+    // TODO replace c srand() and rand()
+    srand((unsigned int)time(NULL));
 
     mem_set_context(MEM_CTX_SCRATCH);
     if (!game_start(game_easy)) {

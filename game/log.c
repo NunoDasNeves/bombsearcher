@@ -195,7 +195,9 @@ bool log_init()
     }
     // TODO
     // raw because SDL isn't initted yet
+#ifdef DEBUG
     log_raw("Log init success\n");
+#endif
 
     return true;
 }

@@ -137,7 +137,6 @@ static void handle_event(SDL_Window* window, SDL_Event* e, ImGuiIO& imgui_io, In
         case SDL_MOUSEBUTTONUP:
         {
             if (imgui_io.WantCaptureMouse) {
-                log_error("imgui wants mouse");
                 break;
             }
             switch(e->button.button)
@@ -270,6 +269,7 @@ int main(int argc, char **argv)
     }
 
     // Detect controller
+    /*
     int num_joysticks = SDL_NumJoysticks();
     if (num_joysticks > 0) {
         if (SDL_IsGameController(0)) {
@@ -283,6 +283,7 @@ int main(int argc, char **argv)
     } else {
         log_info("No joysticks found");
     }
+    */
 
     if (!game_init()) {
         log_error("Failed to initialize game");

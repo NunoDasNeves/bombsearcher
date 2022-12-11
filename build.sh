@@ -20,6 +20,8 @@ COMPILER_FLAGS="-c -Wall -Wno-unused-function -Wno-unused-variable -Wno-unused-b
 
 LINKER_FLAGS="$(sdl2-config --libs --cflags) -ldl"
 
+VERSION=1.0
+
 BUILD_GLAD=0
 BUILD_IMGUI=0
 BUILD_GAME=0
@@ -29,8 +31,8 @@ DEBUG=0
 usage () {
     echo "USAGE: $0 [--debug] [--nolink] [--all] [--glad] [--imgui] [--game] [OUT_DIR]"
     echo "Builds (--all) by default, otherwise compile and link any of glad, imgui, game."
-    echo "Produces an executable + all needed files to run in OUT_DIR or current dir by default."
-    echo "Specify --nolink to disable the above - only compile."
+    echo "Produces built game files and tarball in OUT_DIR (\"\$PWD/out\" by default)."
+    echo "Specify --nolink to disable the above - only compile .o files"
     echo "Specify --debug to build with debugger info, gprof info, and #defines DEBUG and TEST"
 }
 
@@ -81,7 +83,7 @@ done
 
 if [ -z "$OUT_DIR" ];
 then
-    OUT_DIR="$PWD"
+    OUT_DIR="$PWD/out"
 fi
 
 # if none specified, build all
@@ -98,7 +100,7 @@ if [ "$DEBUG" -eq "1" ]; then
 fi
 
 mkdir -p "${BUILD_DIR}"
-pushd "${BUILD_DIR}"
+pushd "${BUILD_DIR}" > /dev/null
 
 if [ "$BUILD_GLAD" -eq "1" ]
 then
@@ -129,7 +131,6 @@ then
     time g++ ${GAME_CPP_SRCS} ${COMPILER_FLAGS} ${GAME_INCLUDE_DIRS} ${OTHER_FLAGS} || exit 1
 fi
 
-
 if [ "$NO_LINK" -eq "0" ];
 then
     echo "linking .o files:"
@@ -137,12 +138,20 @@ then
     time g++ *.o ${LINKER_FLAGS} -o ${EXECUTABLE_NAME} || exit 1
     echo "done"
 
-    popd
+    popd > /dev/null
+    NAME_VERSION=${EXECUTABLE_NAME}-v${VERSION}
     install -d "${OUT_DIR}"
+    rm -f "${OUT_DIR}/${NAME_VERSION}.tar.gz"
     install -d "${OUT_DIR}/shaders"
     install -d "${OUT_DIR}/assets"
     install -C "${BUILD_DIR}/${EXECUTABLE_NAME}" "${OUT_DIR}"
     install -C "${SDL_LIB_DIR}/${SDL_LIB}.so" "${OUT_DIR}"
     install -C shaders/* "${OUT_DIR}/shaders"
     install -C assets/* "${OUT_DIR}/assets"
+    # produce tar
+    pushd "${OUT_DIR}" > /dev/null
+    set -x
+    # add a directory at the root
+    tar cvz --transform="s#^#${NAME_VERSION}/#" -f "${NAME_VERSION}.tar.gz" *
+    popd > /dev/null
 fi
